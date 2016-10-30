@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -72,10 +73,12 @@ func (bc *BuildConfig) findRepoInfo() {
 	bc.Name = filepath.Base(bc.WorkingDir)
 
 	if b, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git/HEAD")); err == nil {
-		pp := bytes.Split(bytes.TrimSuffix(b, []byte("\n")), []byte("/"))
-		bc.BranchTag = string(pp[len(pp)-1])
+		line := string(bytes.TrimSuffix(b, []byte("\n")))
+		ref := strings.Split(line, " ")[1]
+		pp := strings.Split(ref, "/")
+		bc.BranchTag = pp[len(pp)-1]
 
-		if cmt, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git/refs/heads", bc.BranchTag)); err == nil {
+		if cmt, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git", ref)); err == nil {
 			bc.LastCommit = string(cmt[:8])
 			bc.Name += "-" + bc.BranchTag + "-" + bc.LastCommit
 		}

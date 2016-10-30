@@ -18,6 +18,7 @@ deps:
 	godep restore -v
 
 ${NAME}:
-	CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w" -o ${NAME} .
+	CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo -o ${NAME} \
+		-ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w" .
 
 all: clean ${NAME}

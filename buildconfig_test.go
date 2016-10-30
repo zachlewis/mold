@@ -47,6 +47,12 @@ func Test_NewBuildConfig(t *testing.T) {
 	if bimg != "alpine" {
 		t.Fatal("base image should be alpine")
 	}
+	if len(testBc.BranchTag) == 0 {
+		t.Log("branch/tag should be set")
+	}
+	if len(testBc.LastCommit) == 0 {
+		t.Log("last commit should be set")
+	}
 
 	if _, err = NewBuildConfig(b[1:]); err == nil {
 		t.Fatal("should fail")
