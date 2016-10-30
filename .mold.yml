@@ -1,0 +1,12 @@
+docker: true
+build:
+    - image: golang:1.7.3
+      workdir: /go/src/github.com/euforia/mold
+      commands:
+          - make deps
+          - make test
+          - make all
+
+artifacts:
+    images:
+        - name: euforia/mold

@@ -1,0 +1,46 @@
+# This gives the container access to the docker socket
+docker: true
+# Launch services needed for build
+services:
+    - image: elasticsearch
+    - image: progrium/consul
+      commands:
+          - -server
+          - -bootstrap
+# Perform 1 or more builds
+build:
+    - image: golang:1.7.3
+      workdir: /go/src/github.com/euforia/mold
+      environment:
+          - TEST_ENV=test_env
+      commands:
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - uptime
+
+    - image: golang:1.2.1
+      workdir: /go/src/github.com/euforia/mold
+      commands:
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+
+# Build docker images
+artifacts:
+    # Default registry to use if not specified. Blank uses docker hub
+    registry: test.docker.registry
+    images:
+        - name: euforia/mold-test
+          dockerfile: testdata/Dockerfile
+          registry:
+# Send notifications
+notifications:
+    slack:
+        channel: "#test-channel"

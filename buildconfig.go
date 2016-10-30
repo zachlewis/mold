@@ -1,0 +1,84 @@
+package main
+
+import (
+	"bytes"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
+)
+
+const defaultBuildConfigName = ".mold.yml"
+
+// BuildConfig holds the complete build configuration
+type BuildConfig struct {
+	// Project name
+	Name string
+	// Git url
+	RepoURL string
+	// Tag or branch to build
+	BranchTag string
+	// LastCommit for the branch
+	LastCommit string
+	// Working dir of the whole build.  This is essentially the root of the code
+	// repo on the host.
+	WorkingDir string
+	// Service i.e. containers needed to perform build
+	Services []DockerRunConfig
+	// Builds to perform
+	Build []DockerRunConfig
+	// Docker images to generate
+	Artifacts Artifacts
+	//Artifacts []ImageConfig
+
+	// Notifications through out the build process
+	Notifications MultiNotification
+
+	AllowDockerAccess bool `yaml:"docker"` // Mount docker socket to the container.
+}
+
+// NewBuildConfig creates a new config from yaml formatted bytes
+func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
+	var bc BuildConfig
+	err := yaml.Unmarshal(fileBytes, &bc)
+	if err != nil {
+		return nil, err
+	}
+	// Set working directory
+	if bc.WorkingDir, err = os.Getwd(); err == nil {
+		// Set artifact defaults
+		for i, v := range bc.Artifacts.Images {
+			// set the context to the working dir if not supplied
+			if len(v.Context) == 0 {
+				bc.Artifacts.Images[i].Context = bc.WorkingDir
+			}
+		}
+		bc.Artifacts.setDefaults()
+
+		bc.findRepoInfo()
+	}
+
+	return &bc, err
+}
+
+func (bc *BuildConfig) readEnv() {
+	os.Getenv("SLACK_TOKEN")
+	//os.Getenv("")
+}
+
+// try to get name and branch info from the working dir.
+func (bc *BuildConfig) findRepoInfo() {
+	bc.Name = filepath.Base(bc.WorkingDir)
+
+	if b, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git/HEAD")); err == nil {
+		pp := bytes.Split(bytes.TrimSuffix(b, []byte("\n")), []byte("/"))
+		bc.BranchTag = string(pp[len(pp)-1])
+
+		if cmt, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git/refs/heads", bc.BranchTag)); err == nil {
+			bc.LastCommit = string(cmt[:8])
+			bc.Name += "-" + bc.BranchTag + "-" + bc.LastCommit
+		}
+	}
+
+}

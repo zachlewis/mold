@@ -1,0 +1,15 @@
+# This is build file to test a failing build ie any command exiting with a non-zero status
+build:
+    - image: golang:1.7.3
+      workdir: /go/src/github.com/euforia/mold
+      commands:
+          - hostname
+          - uname -a
+          - foobar
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+# Test publish option
+artifacts:
+    publish:
+        - master
