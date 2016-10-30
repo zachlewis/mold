@@ -16,8 +16,8 @@ const (
 	lifeCycleBuild
 	// lifeCyleArtifacts builds specified docker images
 	lifeCyleArtifacts
-	// lifeCycleDelivery pushes the docker images up to a registry
-	lifeCycleDeliver
+	// lifeCyclePublish pushes the docker images up to a registry
+	lifeCyclePublish
 	// lifeCycleTeardown cleans up resources created during the build.
 	lifeCycleTeardown
 )
@@ -29,7 +29,7 @@ type Worker interface {
 	Setup() error                 // Statisfy deps needed for the build
 	Build() error                 // Build required data to be package
 	GenerateArtifacts() error     // Package data to an artifact.
-	Deliver() error               // Deliver the generated artifacts
+	Publish() error               // Publish the generated artifacts
 	Teardown() error
 }
 
@@ -59,7 +59,9 @@ func (lc *LifeCycle) Run(cfg *BuildConfig) error {
 		if err = lc.worker.Build(); err == nil {
 			if err = lc.worker.GenerateArtifacts(); err == nil {
 				if lc.shouldPublishArtifacts() {
-					err = lc.worker.Deliver()
+					err = lc.worker.Publish()
+				} else {
+					lc.log.Write([]byte("[publish] Not publishing. Criteria not met.\n"))
 				}
 			}
 		}
@@ -114,9 +116,9 @@ func (lc *LifeCycle) RunTarget(cfg *BuildConfig, t byte) error {
 			err = lc.worker.GenerateArtifacts()
 		}
 
-	case lifeCycleDeliver:
+	case lifeCyclePublish:
 		if err = lc.worker.Configure(cfg); err == nil {
-			err = lc.worker.Deliver()
+			err = lc.worker.Publish()
 		}
 
 	default:

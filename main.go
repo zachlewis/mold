@@ -10,8 +10,8 @@ import (
 var (
 	dockerURI   = flag.String("uri", "unix:///var/run/docker.sock", "Docker URI")
 	buildFile   = flag.String("f", defaultBuildConfigName, "Build config file")
-	buildTarget = flag.String("t", "", "Build target [build|artifact]")
-	notify      = flag.Bool("n", false, "Enable notifications (default: false)")
+	buildTarget = flag.String("t", "", "Build target [build|artifact|publish]")
+	notify      = flag.Bool("n", false, `Enable notifications (default "false")`)
 	showVersion = flag.Bool("version", false, "Show version")
 
 	//buildCfg *BuildConfig
@@ -54,8 +54,8 @@ func main() {
 		err = lc.RunTarget(buildCfg, lifeCycleBuild)
 	case "artifact":
 		err = lc.RunTarget(buildCfg, lifeCyleArtifacts)
-	case "deliver":
-		err = lc.RunTarget(buildCfg, lifeCycleDeliver)
+	case "publish":
+		err = lc.RunTarget(buildCfg, lifeCyclePublish)
 	case "":
 		err = lc.Run(buildCfg)
 	default:

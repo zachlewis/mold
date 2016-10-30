@@ -110,16 +110,12 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 	return err
 }
 
-// Deliver the artifact based on the config
-func (bld *DockerWorker) Deliver() error {
+// Publish the artifact based on the config
+func (bld *DockerWorker) Publish() error {
 	for _, v := range bld.cfg.Artifacts.Images {
-		//if len(v.Registry) > 0 {
-		//return fmt.Errorf("TBI Deliver")
 		if err := bld.dkr.PushImage(v.RegistryPath(), os.Stdout); err != nil {
 			return err
 		}
-		//
-		//}
 	}
 	return nil
 }
