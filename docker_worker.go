@@ -84,13 +84,27 @@ func (bld *DockerWorker) defaultNetConfig() *network.NetworkingConfig {
 }
 
 // GenerateArtifacts builds docker images
-func (bld *DockerWorker) GenerateArtifacts() error {
-	for _, a := range bld.cfg.Artifacts.Images {
-		bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", a.Name)))
-		if err := bld.dkr.BuildImage(&a, bld.log, fmt.Sprintf("[artifacts/%s]", a.Name)); err != nil {
-			return err
+func (bld *DockerWorker) GenerateArtifacts(names ...string) error {
+	if len(names) == 0 {
+		for _, a := range bld.cfg.Artifacts.Images {
+			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", a.Name)))
+			if err := bld.dkr.BuildImage(&a, bld.log, fmt.Sprintf("[artifacts/%s]", a.Name)); err != nil {
+				return err
+			}
+			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", a.Name)))
 		}
-		bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", a.Name)))
+	} else {
+		for _, name := range names {
+			a := bld.cfg.Artifacts.GetImage(name)
+			if a == nil {
+				return fmt.Errorf("no such artifact: %s", name)
+			}
+			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", a.Name)))
+			if err := bld.dkr.BuildImage(a, bld.log, fmt.Sprintf("[artifacts/%s]", a.Name)); err != nil {
+				return err
+			}
+			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", a.Name)))
+		}
 	}
 	return nil
 }
@@ -104,17 +118,31 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 	return err
 }
 
-// Publish the artifact based on the config
-func (bld *DockerWorker) Publish() error {
-	for _, v := range bld.cfg.Artifacts.Images {
-		if err := bld.dkr.PushImage(v.RegistryPath(), os.Stdout); err != nil {
-			return err
+// Publish the artifact/s based on the config
+func (bld *DockerWorker) Publish(names ...string) error {
+	if len(names) == 0 {
+		for _, v := range bld.cfg.Artifacts.Images {
+			if err := bld.dkr.PushImage(v.RegistryPath(), os.Stdout); err != nil {
+				return err
+			}
+		}
+	} else {
+		for _, name := range names {
+			a := bld.cfg.Artifacts.GetImage(name)
+			if a == nil {
+				return fmt.Errorf("no such artifact: %s", name)
+			}
+			if err := bld.dkr.PushImage(a.RegistryPath(), os.Stdout); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-// Build starts the build.  This is a blocking call
+// Build starts the build.  This is a blocking call. index defines one or more
+// build steps to run.  They are in the order as seen in teh config. If no index
+// is provided all builds are run
 func (bld *DockerWorker) Build() error {
 	done, err := bld.StartBuildAsync(true)
 	if err != nil {

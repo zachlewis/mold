@@ -48,4 +48,12 @@ func Test_Worker_GeneratesArtifacts(t *testing.T) {
 	if err := testBld.RemoveArtifacts(); err != nil {
 		t.Fatal(err)
 	}
+
+	if err := testBld.GenerateArtifacts("euforia/mold-test"); err != nil {
+		t.Fatal(err)
+	}
+	testBld.RemoveArtifacts()
+	if err := testBld.GenerateArtifacts("foo"); err == nil {
+		t.Fatal("should fail with artifact not found")
+	}
 }

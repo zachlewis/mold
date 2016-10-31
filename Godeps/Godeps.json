@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/ipkg/mold",
+	"ImportPath": "github.com/euforia/mold",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Deps": [

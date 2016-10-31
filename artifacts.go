@@ -7,6 +7,17 @@ type Artifacts struct {
 	Publish  []string // branch/tag's to publish images on
 }
 
+// GetImage return an image config of the name.  If the image is not found, nil
+// is returned
+func (art *Artifacts) GetImage(name string) *ImageConfig {
+	for i, v := range art.Images {
+		if v.Name == name {
+			return &art.Images[i]
+		}
+	}
+	return nil
+}
+
 // validateRegistry validates all the registry values by setting the default
 // registry value if one is not specified along with setting the default
 // docker file path

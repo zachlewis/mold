@@ -25,11 +25,11 @@ const (
 // Worker perform all work for a given job.  This would be implemented
 // based on the backend used - in the current case docker.
 type Worker interface {
-	Configure(*BuildConfig) error // Initialize underlying needed structs
-	Setup() error                 // Statisfy deps needed for the build
-	Build() error                 // Build required data to be package
-	GenerateArtifacts() error     // Package data to an artifact.
-	Publish() error               // Publish the generated artifacts
+	Configure(*BuildConfig) error      // Initialize underlying needed structs
+	Setup() error                      // Statisfy deps needed for the build
+	Build() error                      // Build required data to be package
+	GenerateArtifacts(...string) error // Package data to an artifact.
+	Publish(...string) error           // Publish the generated artifacts
 	Teardown() error
 }
 
@@ -84,19 +84,6 @@ func (lc *LifeCycle) shouldPublishArtifacts() bool {
 	return false
 }
 
-func (lc *LifeCycle) printStartSummary() {
-	c := lc.cfg
-	lc.log.Write([]byte(fmt.Sprintf(`
-Name       : %s
-Branch/Tag : %s
-Repo       : %s
-
-Builds     : %d
-Artifacts  : %d
-
-`, c.Name, c.BranchTag, c.RepoURL, len(c.Build), len(c.Artifacts.Images))))
-}
-
 // RunTarget runs a specified target in the lifecyle
 func (lc *LifeCycle) RunTarget(cfg *BuildConfig, t byte) error {
 	var err error
@@ -126,4 +113,17 @@ func (lc *LifeCycle) RunTarget(cfg *BuildConfig, t byte) error {
 
 	}
 	return err
+}
+
+func (lc *LifeCycle) printStartSummary() {
+	c := lc.cfg
+	lc.log.Write([]byte(fmt.Sprintf(`
+Name       : %s
+Branch/Tag : %s
+Repo       : %s
+
+Builds     : %d
+Artifacts  : %d
+
+`, c.Name, c.BranchTag, c.RepoURL, len(c.Build), len(c.Artifacts.Images))))
 }
