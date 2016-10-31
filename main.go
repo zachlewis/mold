@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 var (
@@ -49,15 +50,19 @@ func main() {
 
 	lc := NewLifeCycle(bldr)
 
-	switch *buildTarget {
-	case "build":
+	switch {
+	case strings.HasPrefix(*buildTarget, "build"):
 		err = lc.RunTarget(buildCfg, lifeCycleBuild)
-	case "artifact":
+
+	case strings.HasPrefix(*buildTarget, "artifact"):
 		err = lc.RunTarget(buildCfg, lifeCyleArtifacts)
-	case "publish":
+
+	case strings.HasPrefix(*buildTarget, "publish"):
 		err = lc.RunTarget(buildCfg, lifeCyclePublish)
-	case "":
+
+	case *buildTarget == "":
 		err = lc.Run(buildCfg)
+
 	default:
 		err = fmt.Errorf("Invalid target: %s", *buildTarget)
 	}

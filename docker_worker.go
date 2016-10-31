@@ -49,12 +49,6 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 	defer bld.mu.Unlock()
 	bld.cfg = cfg
 
-	var err error
-	if bld.netID, err = bld.dkr.CreateNetwork(bld.cfg.Name); err != nil {
-		return err
-	}
-	bld.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", bld.cfg.Name, bld.netID)))
-
 	// Build service container contfigs
 	sc := assembleServiceContainers(cfg)
 	bld.sc = make([]*containerState, len(sc))
@@ -140,6 +134,12 @@ func (bld *DockerWorker) Build() error {
 // Setup sets up services needed to perform the build.  These are additional containers
 // that are spun up.  If any error occurs the whole build will bail out
 func (bld *DockerWorker) Setup() error {
+	var err error
+	if bld.netID, err = bld.dkr.CreateNetwork(bld.cfg.Name); err != nil {
+		return err
+	}
+
+	bld.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", bld.cfg.Name, bld.netID)))
 	for i, cs := range bld.sc {
 		if err := bld.dkr.StartContainer(bld.sc[i].ContainerConfig, bld.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
 			return err
