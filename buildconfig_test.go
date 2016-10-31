@@ -30,6 +30,23 @@ func Test_NewBuildConfig(t *testing.T) {
 		t.Fatal(err)
 		t.FailNow()
 	}
+	if len(testBc.BranchTag) == 0 {
+		t.Log("branch/tag should be set")
+		t.Fail()
+	}
+	if len(testBc.LastCommit) == 0 {
+		t.Log("last commit should be set")
+		t.Fail()
+	}
+	if len(testBc.RepoURL) == 0 {
+		t.Log("repo url should be set")
+		t.Fail()
+	}
+	if len(testBc.Name) == 0 {
+		t.Log("name should be set")
+		t.Fail()
+	}
+
 	testBc.Name += "-test1"
 	b, _ = json.MarshalIndent(testBc, "", "  ")
 
@@ -46,12 +63,6 @@ func Test_NewBuildConfig(t *testing.T) {
 	}
 	if bimg != "alpine" {
 		t.Fatal("base image should be alpine")
-	}
-	if len(testBc.BranchTag) == 0 {
-		t.Log("branch/tag should be set")
-	}
-	if len(testBc.LastCommit) == 0 {
-		t.Log("last commit should be set")
 	}
 
 	if _, err = NewBuildConfig(b[1:]); err == nil {

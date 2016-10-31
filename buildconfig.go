@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -56,18 +53,43 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 			}
 		}
 		bc.Artifacts.setDefaults()
-
-		bc.findRepoInfo()
+		bc.readEnvVars()
+		//bc.findRepoInfo()
 	}
 
 	return &bc, err
 }
 
-func (bc *BuildConfig) readEnv() {
-	os.Getenv("SLACK_TOKEN")
-	//os.Getenv("")
+// extract name from url
+func (bc *BuildConfig) setNameFromRepoURL() {
+	pp := strings.Split(bc.RepoURL, "/")
+	if len(pp) > 0 {
+		bc.Name = strings.TrimSuffix(pp[len(pp)-1], ".git")
+	}
 }
 
+func (bc *BuildConfig) readEnvVars() {
+
+	bc.LastCommit = os.Getenv("GIT_COMMIT")
+	if len(bc.RepoURL) == 0 {
+		bc.RepoURL = os.Getenv("GIT_URL")
+	}
+	if len(bc.BranchTag) == 0 {
+		if gb := os.Getenv("GIT_BRANCH"); len(gb) > 0 {
+			pp := strings.Split(gb, "/")
+			if len(pp) > 0 {
+				bc.BranchTag = pp[len(pp)-1]
+			}
+		}
+	}
+	if len(bc.Name) == 0 {
+		bc.setNameFromRepoURL()
+	}
+	// set unique name based on name branch and commit
+	bc.Name += "-" + bc.BranchTag + "-" + bc.LastCommit[:8]
+}
+
+/*
 // try to get name and branch info from the working dir.
 func (bc *BuildConfig) findRepoInfo() {
 	bc.Name = filepath.Base(bc.WorkingDir)
@@ -85,3 +107,4 @@ func (bc *BuildConfig) findRepoInfo() {
 	}
 
 }
+*/
