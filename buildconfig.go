@@ -86,7 +86,10 @@ func (bc *BuildConfig) readEnvVars() {
 		bc.setNameFromRepoURL()
 	}
 	// set unique name based on name branch and commit
-	bc.Name += "-" + bc.BranchTag + "-" + bc.LastCommit[:8]
+	bc.Name += "-" + bc.BranchTag
+	if len(bc.LastCommit) > 7 {
+		bc.Name += "-" + bc.LastCommit[:8]
+	}
 }
 
 /*

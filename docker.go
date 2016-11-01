@@ -208,7 +208,9 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 
 			var m map[string]string
 			if err = json.Unmarshal(b, &m); err != nil {
-				break
+				//break
+				logWriter.Write([]byte(fmt.Sprintf("%s WARN %s %s\n", prefix, err, b)))
+				continue
 			}
 			logWriter.Write([]byte(prefix + " "))
 			logWriter.Write([]byte(m["stream"]))
