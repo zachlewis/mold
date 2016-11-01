@@ -4,6 +4,7 @@ docker: true
 services:
     - image: elasticsearch
     - image: progrium/consul
+      # Args pass to the container
       commands:
           - -server
           - -bootstrap
@@ -34,6 +35,9 @@ build:
 
 # Build docker images
 artifacts:
+    # Only publish the image on the following branches/tags. '*' can be used to
+    # publish on all branches/tags
+    publish:
     # Default registry to use if not specified. Blank uses docker hub
     registry: test.docker.registry
     images:
