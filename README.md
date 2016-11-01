@@ -2,7 +2,7 @@
 Test, Build, Package and Publish your application completely using docker.
 
 ## Installation
-Download the binary based on your OS.  Once uncompressed copy it into your system PATH.
+[Download](https://github.com/d3sw/mold/releases) the binary based on your OS.  Once uncompressed copy it into your system PATH.
 
 ## Usage
 To use mold you can simply issue the `mold` command in the working directory or your git
