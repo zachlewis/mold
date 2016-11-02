@@ -11,7 +11,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
 )
 
 // DockerWorker performs a docker based build per the config
@@ -33,11 +32,11 @@ type DockerWorker struct {
 
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
 // based client is used.
-func NewDockerWorker(cli *client.Client) (d *DockerWorker, err error) {
-	d = &DockerWorker{dkr: &Docker{cli: cli}, log: os.Stdout}
+func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
+	d = &DockerWorker{dkr: dcli, log: os.Stdout}
 
-	if d.dkr.cli == nil {
-		d.dkr.cli, err = client.NewEnvClient()
+	if d.dkr == nil {
+		d.dkr, err = NewDocker("")
 	}
 	return
 }

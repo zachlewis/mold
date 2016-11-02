@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -92,6 +94,27 @@ func (ic *ImageConfig) BaseImage() (string, error) {
 // Docker provides a wrapper to perform rudamentary docker operations
 type Docker struct {
 	cli *client.Client
+}
+
+// NewDocker returns a new docker client helper using the given uri.  If uri is
+// not provided it uses the default env. client
+func NewDocker(uri string) (*Docker, error) {
+	if len(uri) == 0 {
+		cli, err := client.NewEnvClient()
+		return &Docker{cli: cli}, err
+	}
+	var (
+		hcli    *http.Client
+		version = os.Getenv("DOCKER_API_VERSION")
+	)
+	if version == "" {
+		version = client.DefaultVersion
+	}
+	cli, err := client.NewClient(uri, version, hcli, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &Docker{cli: cli}, nil
 }
 
 // Client returns the raw docker client

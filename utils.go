@@ -18,10 +18,6 @@ import (
 
 const dockerSockFile = "/var/run/docker.sock"
 
-func printVersion() {
-	fmt.Printf("%s branch=%s commit=%s buildtime=%s\n", VERSION, branch, commit, buildtime)
-}
-
 // returns the name of the image.  it parses out the namespace and tag if provided
 func nameFromImageName(imageName string) string {
 	iparts := strings.Split(strings.Split(imageName, ":")[0], "/")

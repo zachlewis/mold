@@ -19,9 +19,6 @@ var (
 	target byte
 )
 
-// VERSION number
-const VERSION = "0.1.0"
-
 var (
 	branch    string
 	commit    string
@@ -31,6 +28,7 @@ var (
 func init() {
 	flag.Parse()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	if *showVersion {
 		printVersion()
 		os.Exit(0)
@@ -43,7 +41,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bldr, err := NewDockerWorker(nil)
+	dcli, err := NewDocker(*dockerURI)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bldr, err := NewDockerWorker(dcli)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,4 +75,13 @@ func main() {
 	} else {
 		fmt.Println("")
 	}
+
+	// TODO:
+	// Catch signals for a clean shutdown
+	//sigs := make(chan os.Signal, 1)
+	//signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	//<-sigs
+
+	// Stop running builds
+	// Teardown
 }

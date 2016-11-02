@@ -5,7 +5,7 @@ build:
       commands:
           - make deps
           - make test
-          - make all
+          - make dist
 
 artifacts:
     images:
