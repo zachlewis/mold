@@ -82,11 +82,13 @@ These are the arguments passed to the service container.
 ## Build
 Build contains a list of builds to perform. This is used to perform testing and/or building binaries.  
 Each build will run its set of provided commands in the specified container.  Any failed
-command will cause the build to fail.
+command will cause the build to fail.  This is the only required configuration needed
+to run the build.
 
 #### image
-Image name used to build/test code.  These are disposable and not used to generate the final
-artifact.
+This is the docker image name used to build/test code.  These are disposable and not used to generate the final
+artifact.  Code is built using this image and the generated binaries or files are then used to
+package the image in the artifacts configuration
 
 #### commands
 These are the commands that will be run in the container to do testing and building.
