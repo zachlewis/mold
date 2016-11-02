@@ -28,12 +28,10 @@ type BuildConfig struct {
 	Build []DockerRunConfig
 	// Docker images to generate
 	Artifacts Artifacts
-	//Artifacts []ImageConfig
-
 	// Notifications through out the build process
 	Notifications MultiNotification
-
-	AllowDockerAccess bool `yaml:"docker"` // Mount docker socket to the container.
+	// Allow docker daemon access in the container
+	AllowDockerAccess bool `yaml:"docker"`
 }
 
 // NewBuildConfig creates a new config from yaml formatted bytes
@@ -53,38 +51,27 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 			}
 		}
 		bc.Artifacts.setDefaults()
+		bc.checkRepoInfo()
 		bc.readEnvVars()
-		//bc.findRepoInfo()
 	}
 
 	return &bc, err
 }
 
-// extract name from url
-func (bc *BuildConfig) setNameFromRepoURL() {
-	pp := strings.Split(bc.RepoURL, "/")
-	if len(pp) > 0 {
-		bc.Name = strings.TrimSuffix(pp[len(pp)-1], ".git")
-	}
-}
+// check and set repo info and naming structure
+func (bc *BuildConfig) checkRepoInfo() {
 
-func (bc *BuildConfig) readEnvVars() {
+	name, bt, lc := getRepoInfo(bc.WorkingDir)
+	if len(bc.Name) == 0 && len(name) > 0 {
+		bc.Name = name
+	}
+	if len(bc.BranchTag) == 0 && len(bt) > 0 {
+		bc.BranchTag = bt
+	}
+	if len(bc.LastCommit) == 0 && len(lc) > 0 {
+		bc.LastCommit = lc
+	}
 
-	bc.LastCommit = os.Getenv("GIT_COMMIT")
-	if len(bc.RepoURL) == 0 {
-		bc.RepoURL = os.Getenv("GIT_URL")
-	}
-	if len(bc.BranchTag) == 0 {
-		if gb := os.Getenv("GIT_BRANCH"); len(gb) > 0 {
-			pp := strings.Split(gb, "/")
-			if len(pp) > 0 {
-				bc.BranchTag = pp[len(pp)-1]
-			}
-		}
-	}
-	if len(bc.Name) == 0 {
-		bc.setNameFromRepoURL()
-	}
 	// set unique name based on name branch and commit
 	bc.Name += "-" + bc.BranchTag
 	if len(bc.LastCommit) > 7 {
@@ -92,22 +79,19 @@ func (bc *BuildConfig) readEnvVars() {
 	}
 }
 
-/*
-// try to get name and branch info from the working dir.
-func (bc *BuildConfig) findRepoInfo() {
-	bc.Name = filepath.Base(bc.WorkingDir)
-
-	if b, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git/HEAD")); err == nil {
-		line := string(bytes.TrimSuffix(b, []byte("\n")))
-		ref := strings.Split(line, " ")[1]
-		pp := strings.Split(ref, "/")
-		bc.BranchTag = pp[len(pp)-1]
-
-		if cmt, err := ioutil.ReadFile(filepath.Join(bc.WorkingDir, ".git", ref)); err == nil {
-			bc.LastCommit = string(cmt[:8])
-			bc.Name += "-" + bc.BranchTag + "-" + bc.LastCommit
+// read env vars and config.  These take precedence over all configs overriding
+// anything prior
+func (bc *BuildConfig) readEnvVars() {
+	if cmt := os.Getenv("GIT_COMMIT"); len(cmt) > 7 {
+		bc.LastCommit = cmt[:8]
+	}
+	if rurl := os.Getenv("GIT_URL"); len(rurl) > 0 {
+		bc.RepoURL = rurl
+	}
+	if branchTag := os.Getenv("GIT_BRANCH"); len(branchTag) > 0 {
+		pp := strings.Split(branchTag, "/")
+		if len(pp) > 0 {
+			bc.BranchTag = pp[len(pp)-1]
 		}
 	}
-
 }
-*/

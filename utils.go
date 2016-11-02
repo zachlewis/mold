@@ -18,6 +18,36 @@ import (
 
 const dockerSockFile = "/var/run/docker.sock"
 
+// parse git info from .git/HEAD to get name, branch and commit info.  If not found
+// that item will be an empty string
+func getRepoInfo(path string) (name, branchTag, lastCommit string) {
+	name = filepath.Base(path)
+
+	b, err := ioutil.ReadFile(filepath.Join(path, ".git/HEAD"))
+	if err != nil {
+		return
+	}
+	lp := strings.Split(string(bytes.TrimSuffix(b, []byte("\n"))), " ")
+
+	switch len(lp) {
+	case 2:
+		pp := strings.Split(lp[1], "/")
+		branchTag = pp[len(pp)-1]
+		if cmt, err := ioutil.ReadFile(filepath.Join(path, ".git", lp[1])); err == nil {
+			if len(cmt) > 7 {
+				lastCommit = string(cmt[:8])
+			}
+		}
+
+	case 1:
+		if len(lp[0]) > 7 {
+			lastCommit = lp[0][:8]
+		}
+	}
+
+	return name, branchTag, lastCommit
+}
+
 // returns the name of the image.  it parses out the namespace and tag if provided
 func nameFromImageName(imageName string) string {
 	iparts := strings.Split(strings.Split(imageName, ":")[0], "/")
@@ -59,7 +89,6 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 				Cmd: []string{"/bin/bash", "-cex", b.BuildCmds()},
 				Env: b.Environment,
 				//Hostname:    name,
-				//Env:         svc.Environment,
 				//Labels:      nil,
 				//Healthcheck: nil,
 			},
@@ -108,7 +137,7 @@ func readBuildConfig(bldfile string) (*BuildConfig, error) {
 
 // Tar a given directory and return the underlying reader
 func tarDirectory(dir string, wr io.ReadWriter) (io.Reader, error) {
-	// Use provided writer if supplied
+	// Use provided writer if supplied else create one
 	w := wr
 	if w == nil {
 		w = new(bytes.Buffer)

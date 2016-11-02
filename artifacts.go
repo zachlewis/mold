@@ -18,7 +18,7 @@ func (art *Artifacts) GetImage(name string) *ImageConfig {
 	return nil
 }
 
-// validateRegistry validates all the registry values by setting the default
+// setDefaults sets all the registry values by setting the default
 // registry value if one is not specified along with setting the default
 // docker file path
 func (art *Artifacts) setDefaults() {

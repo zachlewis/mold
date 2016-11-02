@@ -73,6 +73,7 @@ func (lc *LifeCycle) Run(cfg *BuildConfig) error {
 	return err
 }
 
+// whether to publish the image based on the branch/tag
 func (lc *LifeCycle) shouldPublishArtifacts() bool {
 	arts := lc.cfg.Artifacts
 	for _, p := range arts.Publish {

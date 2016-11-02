@@ -38,10 +38,10 @@ func Test_NewBuildConfig(t *testing.T) {
 		t.Log("last commit should be set")
 		t.Fail()
 	}
-	if len(testBc.RepoURL) == 0 {
-		t.Log("repo url should be set")
-		t.Fail()
-	}
+	//if len(testBc.RepoURL) == 0 {
+	//	t.Log("repo url should be set")
+	//	t.Fail()
+	//}
 	if len(testBc.Name) == 0 {
 		t.Log("name should be set")
 		t.Fail()

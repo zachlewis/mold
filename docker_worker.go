@@ -17,6 +17,7 @@ import (
 type DockerWorker struct {
 	mu sync.Mutex
 
+	cfg   *BuildConfig    // overall buildconfig
 	sc    containerStates // service containers
 	bc    containerStates // build containers
 	netID string          // network id to connect all containers to
@@ -24,8 +25,6 @@ type DockerWorker struct {
 	dkr *Docker // docker helper client
 
 	done chan bool // when all builds are completed
-
-	cfg *BuildConfig // overall buildconfig
 
 	log io.Writer
 }

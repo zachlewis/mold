@@ -15,7 +15,6 @@ var (
 	notify      = flag.Bool("n", false, `Enable notifications (default "false")`)
 	showVersion = flag.Bool("version", false, "Show version")
 
-	//buildCfg *BuildConfig
 	target byte
 )
 
