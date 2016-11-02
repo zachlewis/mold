@@ -69,8 +69,8 @@ identical.  Multiple services and builds can be defined for each of these sectio
               registry:
 
 ## Services
-The services block starts docker containers needed to perform the build.  These are spun up
-before the the build phase starts.  These services can then be accesses via their image name
+Services is a list of containers that need to be started prior to the build.  These are spun up
+before the the code build actually starts.  They services can then be accesses via their image name
 from the build container.
 
 #### image
@@ -80,8 +80,9 @@ The image name of the service to start.
 These are the arguments passed to the service container.
 
 ## Build
-The build block is used to perform testing and/or building binaries if needed.  This executes
-commands specified for the build in a docker container.  One or more builds can be specified.
+Build contains a list of builds to perform. This is used to perform testing and/or building binaries.  
+Each build will run its set of provided commands in the specified container.  Any failed
+command will cause the build to fail.
 
 #### image
 Image name used to build/test code.  These are disposable and not used to generate the final
@@ -94,5 +95,17 @@ These are the commands that will be run in the container to do testing and build
 Artifacts are the images that will generated as part of this build.  These are docker images
 that would then get published to a registry.  
 
+#### registry
+This option sets the default registry for all images in the case where it is not supplied
+as for of the image config.  This defaults to docker hub if not specified.
+
 #### publish
-This option specifies which branches to push an image from.  * pushes the image on all branches.
+This option specifies which branches will trigger a push to the registry.  `*` triggers
+a push on all branches/tags.
+
+#### images
+A list of images to build.
+
+- **name**: Specifies the name of the image
+- **dockerfile**: Relative path to the Dockerfile.
+- **registry**: Registry to push to.  If not specified the default one is used.

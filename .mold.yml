@@ -6,6 +6,7 @@ build:
           - make deps
           - make test
           - make dist
+          - make all
 
 artifacts:
     images:
