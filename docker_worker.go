@@ -164,6 +164,12 @@ func (bld *DockerWorker) Build() error {
 	return nil
 }
 
+// Abort cancels a running build
+func (bld *DockerWorker) Abort() error {
+	bld.cancelled <- true
+	return nil
+}
+
 // Setup sets up services needed to perform the build.  These are additional containers
 // that are spun up.  If any error occurs the whole build will bail out
 func (bld *DockerWorker) Setup() error {

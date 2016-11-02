@@ -31,6 +31,7 @@ type Worker interface {
 	GenerateArtifacts(...string) error // Package data to an artifact.
 	Publish(...string) error           // Publish the generated artifacts
 	Teardown() error
+	Abort() error
 }
 
 // LifeCycle manages the complete lifecyle
@@ -83,6 +84,11 @@ func (lc *LifeCycle) shouldPublishArtifacts() bool {
 		}
 	}
 	return false
+}
+
+// Abort the lifecyle ending it.
+func (lc *LifeCycle) Abort() error {
+	return lc.worker.Abort()
 }
 
 // RunTarget runs a specified target in the lifecyle
