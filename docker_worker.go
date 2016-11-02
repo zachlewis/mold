@@ -24,7 +24,8 @@ type DockerWorker struct {
 
 	dkr *Docker // docker helper client
 
-	done chan bool // when all builds are completed
+	done      chan bool // when all builds are completed
+	cancelled chan bool // cancelled channel
 
 	log io.Writer
 }
@@ -32,7 +33,7 @@ type DockerWorker struct {
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
 // based client is used.
 func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
-	d = &DockerWorker{dkr: dcli, log: os.Stdout}
+	d = &DockerWorker{dkr: dcli, log: os.Stdout, cancelled: make(chan bool, 1)}
 
 	if d.dkr == nil {
 		d.dkr, err = NewDocker("")
@@ -146,7 +147,13 @@ func (bld *DockerWorker) Build() error {
 	if err != nil {
 		return err
 	}
-	<-done
+
+	select {
+	case <-done:
+	case <-bld.cancelled:
+		// TODO: stop running containers
+		return fmt.Errorf("user cancelled build")
+	}
 
 	for _, b := range bld.bc {
 		if b.status != "success" {
