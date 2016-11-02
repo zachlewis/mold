@@ -216,22 +216,27 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 	}
 
 	rsp, err := dkr.cli.ImageBuild(context.Background(), bldCxt, opts)
-	if err == nil {
+	if err != nil {
+		return err
+	}
+	go func() {
 		defer rsp.Body.Close()
 		buf := bufio.NewReader(rsp.Body)
-
+		var e error
 		for {
-			var b []byte
-			if b, err = buf.ReadBytes('\n'); err != nil {
-				if err == io.EOF {
-					err = nil
+			b, err := buf.ReadBytes('\n')
+			if err != nil {
+				if err != io.EOF {
+					e = err
 				}
 				break
 			}
+			b = b[:len(b)-1]
 
 			var m map[string]string
 			if err = json.Unmarshal(b, &m); err != nil {
 				logWriter.Write([]byte(fmt.Sprintf("%s ERR %s %s\n", prefix, err, b)))
+				e = err
 				break
 			}
 
@@ -240,8 +245,12 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 			logWriter.Write([]byte(m["stream"]))
 			//}
 		}
-	}
-	return err
+		if e != nil {
+			d := []byte(prefix + " ERR " + err.Error() + "\n")
+			logWriter.Write(d)
+		}
+	}()
+	return nil
 }
 
 // RemoveImage locally from the host

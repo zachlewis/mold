@@ -24,8 +24,8 @@ type DockerWorker struct {
 
 	dkr *Docker // docker helper client
 
-	done      chan bool // when all builds are completed
-	cancelled chan bool // cancelled channel
+	done  chan bool // when all builds are completed
+	abort chan bool // cancelled channel
 
 	log io.Writer
 }
@@ -33,7 +33,7 @@ type DockerWorker struct {
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
 // based client is used.
 func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
-	d = &DockerWorker{dkr: dcli, log: os.Stdout, cancelled: make(chan bool, 1)}
+	d = &DockerWorker{dkr: dcli, log: os.Stdout, abort: make(chan bool, 1)}
 
 	if d.dkr == nil {
 		d.dkr, err = NewDocker("")
@@ -150,15 +150,15 @@ func (bld *DockerWorker) Build() error {
 
 	select {
 	case <-done:
-	case <-bld.cancelled:
-		// TODO: stop running containers
-		return fmt.Errorf("user cancelled build")
-	}
-
-	for _, b := range bld.bc {
-		if b.status != "success" {
-			return fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image)
+		for _, b := range bld.bc {
+			if b.status != "success" {
+				return fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image)
+			}
 		}
+
+	case <-bld.abort:
+		// TODO: stop running containers
+		return fmt.Errorf("user aborted build")
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func (bld *DockerWorker) Build() error {
 
 // Abort cancels a running build
 func (bld *DockerWorker) Abort() error {
-	bld.cancelled <- true
+	bld.abort <- true
 	return nil
 }
 
