@@ -70,7 +70,7 @@ identical.  Multiple services and builds can be defined for each of these sectio
 
 ## Services
 Services is a list of containers that need to be started prior to the build.  These are spun up
-before the the code build actually starts.  They services can then be accesses via their image name
+before the the code build actually starts.  These services can then be accessed via their image name
 from the build container.
 
 #### image
