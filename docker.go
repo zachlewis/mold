@@ -254,8 +254,7 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 		//}
 	}
 	if e != nil {
-		d := []byte(prefix + " ERR " + err.Error() + "\n")
-		logWriter.Write(d)
+		logWriter.Write([]byte(prefix + " ERR " + e.Error() + "\n"))
 	}
 	//}()
 	return nil
