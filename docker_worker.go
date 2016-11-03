@@ -65,13 +65,15 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 		cs.Network = bld.defaultNetConfig()
 		bld.sc[i] = cs
 	}
-
+	//time.Now().Format(time.RFC3339)
 	// Build build container configs
 	bc := assembleBuildContainers(cfg)
 	bld.bc = make([]*containerState, len(bc))
 	for i, s := range bc {
 		cs := &containerState{ContainerConfig: s, Type: BuildContainerType}
-		cs.Name = fmt.Sprintf("%s-%d", bld.cfg.Name, i)
+		//cs.Name = fmt.Sprintf("%s-%d", bld.cfg.Name, i)
+
+		cs.Name = fmt.Sprintf("%s-%d-%d", bld.cfg.Name, i, time.Now().UnixNano())
 		cs.Network = bld.defaultNetConfig()
 		bld.bc[i] = cs
 	}
