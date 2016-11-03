@@ -8,9 +8,13 @@ services:
       commands:
           - -server
           - -bootstrap
-# Perform 1 or more builds
+# Perform 1 or more builds.  This run a container with the specified parameters
+# and commands.
 build:
+    # Docker image to run commands on
     - image: golang:1.7.3
+      # Working directory in the container. This is where your code repo is mounted
+      # and persists through out the lifecycle of the build.
       workdir: /go/src/github.com/euforia/mold
       environment:
           - TEST_ENV=test_env
@@ -22,8 +26,9 @@ build:
           - whoami
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
           - uptime
-
+    # Docker image to run commands on
     - image: golang:1.2.1
+      # Working directory in the container
       workdir: /go/src/github.com/euforia/mold
       commands:
           - hostname

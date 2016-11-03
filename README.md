@@ -5,7 +5,7 @@ Test, Build, Package and Publish your application completely using docker.
 [Download](https://github.com/d3sw/mold/releases) the binary based on your OS.  Once uncompressed copy it into your system PATH.
 
 ## Usage
-To use mold you can simply issue the `mold` command in the working directory or your git
+To use mold you can simply issue the `mold` command in the root of your git
 repository.  By default the command looks for a `.mold.yml` at the root of your project.  To
 specify an alternate file you can use the `-f` flag followed by the path to your build config.
 
@@ -19,12 +19,19 @@ specify an alternate file you can use the `-f` flag followed by the path to your
 
 In most cases you will simply issue the `mold` command.
 
-## Config
+## Configuration
+By default mold looks for a .mold.yml configuration file at the root of your project.
+This contains all the necessary information to perform your build.  A sample with comments
+can be found in [testdata/mold1.yml](testdata/mold1.yml).
+
 The build configuration is broken up into the following sections:
 
 - Services
 - Build
 - Artifacts/Publish
+
+This also is representative of the lifecycle the build follows.  Each of the above
+happen in sequential order.
 
 All sections aside from `build` are optional.
 
@@ -100,9 +107,11 @@ package the image as specified in the [artifacts](#Artifacts) configuration.
 These are the commands that will be run in the container to do testing and building.
 
 ## Artifacts
-Artifacts are the images that will generated as part of this build.  These are docker images
-that would then get published to a registry.  This is the final product that would be
-used in production.  These images would be very trimmed down and as minimalistic as possible.
+Artifacts are docker images to be built using the data available from the build step.  
+Using the specified Dockerfile and name, image are built which may be published to a registry
+based on conditional parameters.  This is the final product destined for production.  
+These images would be very trimmed down and as minimalistic as possible specifically tailored
+for the application.  
 
 #### registry
 This option sets the default registry for all images in the case where it is not supplied.
@@ -119,5 +128,19 @@ are:
 A list of images to build.  Each image has the following options available:
 
 - **name**: Specifies the name of the image (required)
-- **dockerfile**: Relative path to the Dockerfile. (required)
+
+- **dockerfile**: Relative path to the Dockerfile. (required) Information on how a
+Dockerfile works can be found [here](https://docs.docker.com/engine/reference/builder/)
+
 - **registry**: Registry to push to.  If not specified the default one is used.
+
+## Cleanup
+As you perform builds, there will be a build of containers and images left behind that may no
+longer be needed.  You can pick and choose which ones to keep.  A helper script has been provided
+which removes all containers that have exited, intermediate images as well as dangling volumes.
+
+DO NOT USE this script if any of the exited containers, images or volumes are of any value that
+you would like to save.
+
+The script can be found in [scripts/drclean](scripts/drclean).  Please read the comments if you would like to know
+what it exactly does.
