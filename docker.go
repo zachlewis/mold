@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -159,6 +160,11 @@ func (dkr *Docker) StartContainer(cc *ContainerConfig, wr io.Writer, prefix stri
 	return err
 }
 
+// StopContainer stops a container
+func (dkr *Docker) StopContainer(containerID string, timeout time.Duration) error {
+	return dkr.cli.ContainerStop(context.Background(), containerID, &timeout)
+}
+
 // TailLogs tail container logs to the given writer
 // Attach stdout and stderr of the container to stdout
 func (dkr *Docker) TailLogs(containerID string, wr io.Writer, prefix string) error {
@@ -219,37 +225,39 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 	if err != nil {
 		return err
 	}
-	go func() {
-		defer rsp.Body.Close()
-		buf := bufio.NewReader(rsp.Body)
-		var e error
-		for {
-			b, err := buf.ReadBytes('\n')
-			if err != nil {
-				if err != io.EOF {
-					e = err
-				}
-				break
-			}
-			b = b[:len(b)-1]
 
-			var m map[string]string
-			if err = json.Unmarshal(b, &m); err != nil {
-				logWriter.Write([]byte(fmt.Sprintf("%s ERR %s %s\n", prefix, err, b)))
+	defer rsp.Body.Close()
+	var (
+		buf = bufio.NewReader(rsp.Body)
+		e   error
+	)
+	for {
+		b, err := buf.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
 				e = err
-				break
 			}
+			break
+		}
+		b = b[:len(b)-1]
 
-			//if v, ok := m["stream"]; ok {
-			logWriter.Write([]byte(prefix + " "))
-			logWriter.Write([]byte(m["stream"]))
-			//}
+		var m map[string]string
+		if err = json.Unmarshal(b, &m); err != nil {
+			logWriter.Write([]byte(fmt.Sprintf("%s ERR %s %s\n", prefix, err, b)))
+			e = err
+			break
 		}
-		if e != nil {
-			d := []byte(prefix + " ERR " + err.Error() + "\n")
-			logWriter.Write(d)
-		}
-	}()
+
+		//if v, ok := m["stream"]; ok {
+		logWriter.Write([]byte(prefix + " "))
+		logWriter.Write([]byte(m["stream"]))
+		//}
+	}
+	if e != nil {
+		d := []byte(prefix + " ERR " + err.Error() + "\n")
+		logWriter.Write(d)
+	}
+	//}()
 	return nil
 }
 

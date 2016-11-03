@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -51,6 +53,15 @@ func main() {
 	}
 
 	lc := NewLifeCycle(bldr)
+	go func() {
+		// Catch signals for a clean shutdown
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		<-sigs
+		if e := lc.Abort(); e != nil {
+			log.Println("ERR", e)
+		}
+	}()
 
 	switch {
 	case strings.HasPrefix(*buildTarget, "build"):
@@ -74,14 +85,4 @@ func main() {
 	} else {
 		fmt.Println("")
 	}
-
-	// TODO:
-	// Catch signals for a clean shutdown
-	//sigs := make(chan os.Signal, 1)
-	//signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	//<-sigs
-	//lc.Abort()
-
-	// Stop running builds
-	// Teardown
 }

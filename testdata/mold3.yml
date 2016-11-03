@@ -1,0 +1,26 @@
+
+build:
+    - image: golang:1.7.3
+      workdir: /go/src/github.com/euforia/mold
+      environment:
+          - TEST_ENV=test_env
+      commands:
+          - hostname
+          - uname -a
+          - sleep 2
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - uptime
+
+    - image: golang:1.2.1
+      workdir: /go/src/github.com/euforia/mold
+      commands:
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - sleep 3
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'

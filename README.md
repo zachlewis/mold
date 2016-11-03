@@ -11,15 +11,11 @@ specify an alternate file you can use the `-f` flag followed by the path to your
 
     Usage of mold:
 
-      -f string
-            Build config file (default ".mold.yml")
-      -n    Enable notifications (default "false")
-      -t string
-            Build a specific target only [build|artifact|publish]
-      -uri string
-            Docker URI (default "unix:///var/run/docker.sock")
-      -version
-            Show version
+      -f       string  Build config file (default ".mold.yml")
+      -n               Enable notifications
+      -t       string  Build a specific target only [build|artifact|publish]
+      -uri     string  Docker URI (default "unix:///var/run/docker.sock")
+      -version         Show version
 
 In most cases you will simply issue the `mold` command.
 
@@ -69,12 +65,17 @@ identical.  Multiple services and builds can be defined for each of these sectio
               registry:
 
 ## Services
-Services is a list of containers that need to be started prior to the build.  These are spun up
-before the the code build actually starts.  These services can then be accessed via their image name
-from the build container.
+Services is a list of containers that need to be started prior to the build.  These are
+containers your build process needs to perform the build.  For example if you are running
+tests that require elasticsearch, you would declare a elasticsearch container to run
+in this section as shown in the above example.
+
+Service containers are spun up prior to the code build.  They are accessed via their image name
+from your build container.
 
 #### image
-The image name of the service to start.
+The image name of the service to start.  A vast list of public images can be found on
+[Docker Hub](https://hub.docker.com).  Private images can also be specified.
 
 #### commands
 These are the arguments passed to the service container.
@@ -85,29 +86,38 @@ Each build will run its set of provided commands in the specified container.  An
 command will cause the build to fail.  This is the only required configuration needed
 to run the build.
 
+#### workdir
+This is **path inside the container** where the project repository will be accessible (mounted).
+It can be an path of your choosing.  In the above example the source repo for mold will
+be available under `/go/src/github.com/euforia/mold` inside the `golang:1.7.3` container.
+
 #### image
 This is the docker image name used to build/test code.  These are disposable and not used to generate the final
 artifact.  Code is built using this image and the generated binaries or files are then used to
-package the image in the artifacts configuration
+package the image as specified in the [artifacts](#Artifacts) configuration.
 
 #### commands
 These are the commands that will be run in the container to do testing and building.
 
 ## Artifacts
 Artifacts are the images that will generated as part of this build.  These are docker images
-that would then get published to a registry.  
+that would then get published to a registry.  This is the final product that would be
+used in production.  These images would be very trimmed down and as minimalistic as possible.
 
 #### registry
-This option sets the default registry for all images in the case where it is not supplied
-as for of the image config.  This defaults to docker hub if not specified.
+This option sets the default registry for all images in the case where it is not supplied.
+It defaults to [Docker Hub](https://hub.docker.com) if not specified.
 
 #### publish
-This option specifies which branches will trigger a push to the registry.  `*` triggers
-a push on all branches/tags.
+This option specifies which branches will trigger a push to the registry.  Available options
+are:
+
+- `*` For all branches/tags
+- Name of a branch/tag
 
 #### images
-A list of images to build.
+A list of images to build.  Each image has the following options available:
 
-- **name**: Specifies the name of the image
-- **dockerfile**: Relative path to the Dockerfile.
+- **name**: Specifies the name of the image (required)
+- **dockerfile**: Relative path to the Dockerfile. (required)
 - **registry**: Registry to push to.  If not specified the default one is used.

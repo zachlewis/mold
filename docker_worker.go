@@ -13,6 +13,11 @@ import (
 	"github.com/docker/docker/api/types/network"
 )
 
+// default timeout when trying to stop a container.
+const defaultStopTimeout int = 5
+
+var errAborted = fmt.Errorf("aborted")
+
 // DockerWorker performs a docker based build per the config
 type DockerWorker struct {
 	mu sync.Mutex
@@ -24,8 +29,9 @@ type DockerWorker struct {
 
 	dkr *Docker // docker helper client
 
-	done  chan bool // when all builds are completed
-	abort chan bool // cancelled channel
+	done    chan bool // when all builds are completed
+	abort   chan bool // cancelled channel
+	aborted bool      // whether the worker has begun shutdown
 
 	log io.Writer
 }
@@ -86,6 +92,9 @@ func (bld *DockerWorker) defaultNetConfig() *network.NetworkingConfig {
 func (bld *DockerWorker) GenerateArtifacts(names ...string) error {
 	if len(names) == 0 {
 		for _, a := range bld.cfg.Artifacts.Images {
+			if bld.aborted {
+				return errAborted
+			}
 			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", a.Name)))
 			if err := bld.dkr.BuildImage(&a, bld.log, fmt.Sprintf("[artifacts/%s]", a.Name)); err != nil {
 				return err
@@ -94,6 +103,9 @@ func (bld *DockerWorker) GenerateArtifacts(names ...string) error {
 		}
 	} else {
 		for _, name := range names {
+			if bld.aborted {
+				return errAborted
+			}
 			a := bld.cfg.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
@@ -121,12 +133,18 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 func (bld *DockerWorker) Publish(names ...string) error {
 	if len(names) == 0 {
 		for _, v := range bld.cfg.Artifacts.Images {
+			if bld.aborted {
+				return errAborted
+			}
 			if err := bld.dkr.PushImage(v.RegistryPath(), os.Stdout); err != nil {
 				return err
 			}
 		}
 	} else {
 		for _, name := range names {
+			if bld.aborted {
+				return errAborted
+			}
 			a := bld.cfg.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
@@ -152,20 +170,35 @@ func (bld *DockerWorker) Build() error {
 	case <-done:
 		for _, b := range bld.bc {
 			if b.status != "success" {
-				return fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image)
+				err = mergeErrors(err, fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image))
 			}
 		}
 
 	case <-bld.abort:
-		// TODO: stop running containers
-		return fmt.Errorf("user aborted build")
+		bld.log.Write([]byte("[build] Aborting...\n"))
+		if e := bld.stopBuildContainer(); e != nil {
+			bld.log.Write([]byte("ERR Stopping build containers:" + e.Error() + "\n"))
+		}
 	}
 
-	return nil
+	return err
+}
+
+func (bld *DockerWorker) stopBuildContainer() error {
+	var err error
+	for _, bc := range bld.bc {
+		bld.log.Write([]byte("[build] Stopping container: " + bc.ID() + "\n"))
+		err = mergeErrors(err, bld.dkr.StopContainer(bc.ID(), time.Duration(defaultStopTimeout)*time.Second))
+	}
+	return err
 }
 
 // Abort cancels a running build
 func (bld *DockerWorker) Abort() error {
+	bld.mu.Lock()
+	bld.aborted = true
+	bld.mu.Unlock()
+
 	bld.abort <- true
 	return nil
 }
