@@ -53,6 +53,12 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 		bc.Artifacts.setDefaults()
 		bc.checkRepoInfo()
 		bc.readEnvVars()
+
+		// set unique name based on name branch and commit
+		bc.Name += "-" + bc.BranchTag
+		if len(bc.LastCommit) > 7 {
+			bc.Name += "-" + bc.LastCommit[:8]
+		}
 	}
 
 	return &bc, err
@@ -70,12 +76,6 @@ func (bc *BuildConfig) checkRepoInfo() {
 	}
 	if len(bc.LastCommit) == 0 && len(lc) > 0 {
 		bc.LastCommit = lc
-	}
-
-	// set unique name based on name branch and commit
-	bc.Name += "-" + bc.BranchTag
-	if len(bc.LastCommit) > 7 {
-		bc.Name += "-" + bc.LastCommit[:8]
 	}
 }
 
