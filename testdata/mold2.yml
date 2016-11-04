@@ -13,3 +13,5 @@ build:
 artifacts:
     publish:
         - master
+    images:
+        - name: foo/bar

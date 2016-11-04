@@ -11,9 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
 )
 
 const dockerSockFile = "/var/run/docker.sock"
@@ -60,7 +58,10 @@ func nameFromImageName(imageName string) string {
 func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
 	bcs := make([]*ContainerConfig, len(bc.Services))
 	for i, b := range bc.Services {
-		bcs[i] = &ContainerConfig{
+		cc := DefaultContainerConfig(b.Image)
+		cc.Container.Cmd = b.Commands
+		cc.Container.Env = b.Environment
+		/*bcs[i] = &ContainerConfig{
 			Container: &container.Config{
 				Image: b.Image,
 				Cmd:   b.Commands,
@@ -70,7 +71,8 @@ func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
 				EndpointsConfig: map[string]*network.EndpointSettings{},
 			},
 			Host: &container.HostConfig{},
-		}
+		}*/
+		bcs[i] = cc
 	}
 	return bcs
 }
@@ -79,7 +81,16 @@ func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
 func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 	bconts := make([]*ContainerConfig, len(bc.Build))
 	for i, b := range bc.Build {
-		bconts[i] = &ContainerConfig{
+		cc := DefaultContainerConfig(b.Image)
+		cc.Container.WorkingDir = b.Workdir
+		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
+		cc.Container.Cmd = []string{"/bin/bash", "-cex", b.BuildCmds()}
+		cc.Container.Env = b.Environment
+		cc.Host.Binds = []string{fmt.Sprintf("%s:%s", bc.WorkingDir, b.Workdir)}
+		cc.Host.Mounts = []mount.Mount{
+			mount.Mount{Target: b.Workdir, Source: bc.WorkingDir, Type: mount.TypeBind},
+		}
+		/*bconts[i] = &ContainerConfig{
 			Container: &container.Config{
 				Image:      b.Image,
 				WorkingDir: b.Workdir,
@@ -104,7 +115,9 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 				//DNSOptions: []string{},
 				//DNSSearch:  []string{},
 			},
-		}
+		}*/
+		bconts[i] = cc
+
 		// Mount docker.sock in container if requested.
 		if bc.AllowDockerAccess {
 			bconts[i].Container.Volumes[dockerSockFile] = struct{}{}
@@ -186,4 +199,56 @@ func tarDirectory(dir string, wr io.ReadWriter) (io.Reader, error) {
 	})
 
 	return w, err
+}
+
+// parseTarget parses user supplied target to get the lifecycle phase and
+// a sub phase is specified
+func parseTarget(target string) (lcStep LifeCyclePhase, sub string) {
+	if target == "" {
+		return
+	}
+
+	pp := strings.Split(target, "/")
+	switch len(pp) {
+	case 1:
+		lcStep = LifeCyclePhase(pp[0])
+	default:
+		lcStep = LifeCyclePhase(pp[0])
+		sub = strings.Join(pp[1:], "/")
+	}
+	return
+}
+
+func printUsage() {
+	fmt.Printf(`
+mold [ options ]
+
+Mold is a tool to perform testing, building, packaging and publishing of
+applications completely using Docker.  Application code is tested and built in a
+Docker container following by the building for Docker images and publishing to a
+registry, all controlled via a single configuration file.
+
+Options:
+
+  -version  Show version
+
+  -uri      Docker URI          (default: %s)
+
+  -f        Configuration file  (default: %s)
+
+  -t        Target to build     (default: all)
+
+            build      Only perform a build.
+
+            artifacts  Generate all artifacts.  Specific artifacts can be built
+                       using artifacts/< image_name > as the target where
+                       < image_name > would be that as specified in your
+                       configuration.
+
+            publish    Publish all artifacts.  Specific artifacts can be published
+                       using publish/< image_name > as the target where
+                       < image_name > would be that as specified in your
+                       configuration
+
+`, *dockerURI, *buildFile)
 }

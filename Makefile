@@ -11,10 +11,11 @@ BUILD_CMD = CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo \
 GOOS = $(shell go env GOOS)
 
 clean:
-	rm -rf $(NAME) vendor/* build
+	rm -rf $(NAME) vendor/* build coverage.out
+	go clean -i ./...
 
 test:
-	go test -v -cover ./...
+	go test -v -coverprofile=coverage.out ./...
 
 deps:
 	go get github.com/tools/godep

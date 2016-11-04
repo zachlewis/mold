@@ -7,19 +7,16 @@ import (
 	"os"
 )
 
+// LifeCyclePhase represents a phase in the lifecycle
+type LifeCyclePhase string
+
 const (
-	// lifeCycleInit is where configs are read in and validated
-	lifeCycleConfigure byte = iota
-	// lifeCycleSetup sets up additional containers that need to be run for the build
-	lifeCycleSetup
-	// lifeCycleBuild is where the user defined work is performed in the container
-	lifeCycleBuild
-	// lifeCyleArtifacts builds specified docker images
-	lifeCyleArtifacts
-	// lifeCyclePublish pushes the docker images up to a registry
-	lifeCyclePublish
-	// lifeCycleTeardown cleans up resources created during the build.
-	lifeCycleTeardown
+	lifeCycleConfigure LifeCyclePhase = "configure" // lifeCycleInit is where configs are read in and validated
+	lifeCycleSetup     LifeCyclePhase = "setup"     // lifeCycleSetup sets up additional containers that need to be run for the build
+	lifeCycleBuild     LifeCyclePhase = "build"     // lifeCycleBuild is where the user defined work is performed in the container
+	lifeCyleArtifacts  LifeCyclePhase = "artifacts" // lifeCyleArtifacts builds specified docker images
+	lifeCyclePublish   LifeCyclePhase = "publish"   // lifeCyclePublish pushes the docker images up to a registry
+	lifeCycleTeardown  LifeCyclePhase = "teardown"  // lifeCycleTeardown cleans up resources created during the build.
 )
 
 // Worker perform all work for a given job.  This would be implemented
@@ -92,9 +89,9 @@ func (lc *LifeCycle) Abort() error {
 }
 
 // RunTarget runs a specified target in the lifecyle
-func (lc *LifeCycle) RunTarget(cfg *BuildConfig, t byte) error {
+func (lc *LifeCycle) RunTarget(cfg *BuildConfig, target LifeCyclePhase, args ...string) error {
 	var err error
-	switch t {
+	switch target {
 	case lifeCycleBuild:
 		if err = lc.worker.Configure(cfg); err == nil {
 			if err = lc.worker.Setup(); err == nil {
@@ -107,16 +104,16 @@ func (lc *LifeCycle) RunTarget(cfg *BuildConfig, t byte) error {
 
 	case lifeCyleArtifacts:
 		if err = lc.worker.Configure(cfg); err == nil {
-			err = lc.worker.GenerateArtifacts()
+			err = lc.worker.GenerateArtifacts(args...)
 		}
 
 	case lifeCyclePublish:
 		if err = lc.worker.Configure(cfg); err == nil {
-			err = lc.worker.Publish()
+			err = lc.worker.Publish(args...)
 		}
 
 	default:
-		err = fmt.Errorf("invalid target: %d", t)
+		err = fmt.Errorf("invalid target: %s", target)
 
 	}
 	return err

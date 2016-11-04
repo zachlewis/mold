@@ -28,10 +28,14 @@ func Test_LifeCycle_fail(t *testing.T) {
 }
 
 func Test_LifeCycle_Abort(t *testing.T) {
-	bc, _ := readBuildConfig("./testdata/mold3.yml")
+	bc, bld, err := initializeBuild("./testdata/mold3.yml", *dockerURI)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	bc.Name += "-test4"
 
-	lc := NewLifeCycle(testBld)
+	lc := NewLifeCycle(bld)
 	go func() {
 		<-time.After(2750 * time.Millisecond)
 		if err := lc.Abort(); err != nil {
@@ -43,4 +47,17 @@ func Test_LifeCycle_Abort(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func Test_LifeCycle_RunTarget(t *testing.T) {
+	bc, bld, _ := initializeBuild("./testdata/mold1.yml", *dockerURI)
+	bc.Name += "-test5"
+	lc := NewLifeCycle(bld)
+	if err := lc.RunTarget(bc, "artifacts", "euforia/mold-test"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := lc.RunTarget(bc, "build"); err != nil {
+		t.Fatal(err)
+	}
 }
