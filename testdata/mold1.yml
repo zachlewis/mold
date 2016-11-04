@@ -30,6 +30,7 @@ build:
     - image: golang:1.2.1
       # Working directory in the container
       workdir: /go/src/github.com/euforia/mold
+      # Your customized build commands.
       commands:
           - hostname
           - uname -a

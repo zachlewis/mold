@@ -34,12 +34,16 @@ type DockerWorker struct {
 	aborted bool      // whether the worker has begun shutdown
 
 	log io.Writer
+	// Auth config for registry operations
+	authCfg *dockerAuthConfig
 }
 
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
 // based client is used.
 func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
 	d = &DockerWorker{dkr: dcli, log: os.Stdout, abort: make(chan bool, 1)}
+	// set up registry auth. pushes will not happen if failed
+	d.authCfg, _ = readDockerAuthConfig("")
 
 	if d.dkr == nil {
 		d.dkr, err = NewDocker("")
@@ -133,6 +137,10 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 
 // Publish the artifact/s based on the config
 func (bld *DockerWorker) Publish(names ...string) error {
+	if bld.authCfg == nil || len(bld.authCfg.Auths) == 0 {
+		bld.log.Write([]byte("[publish] Not publishing.  Registry auth not specified\n"))
+		return nil
+	}
 	if len(names) == 0 {
 		for _, v := range bld.cfg.Artifacts.Images {
 			if bld.aborted {

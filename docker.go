@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -364,4 +365,37 @@ type imgPullProgress struct {
 	Status         string
 	ID             string
 	ProgressDetail imgPullProgressDetail
+}
+
+type dockerAuthConfig struct {
+	Auths       map[string]types.AuthConfig `json:"auths"`
+	HTTPHeaders map[string]string           `json:"HttpHeaders"`
+}
+
+func (dac *dockerAuthConfig) DockerHubAuth() *types.AuthConfig {
+	for k, v := range dac.Auths {
+		pp := strings.Split(k, ".")
+		// make sure the fqdn has atleast 3 parts for docker hub registry
+		if len(pp) > 2 {
+			if pp[len(pp)-2] == "docker" {
+				return &v
+			}
+		}
+	}
+	return nil
+}
+
+func readDockerAuthConfig(cfgfile string) (*dockerAuthConfig, error) {
+	cfile := cfgfile
+	if cfile == "" {
+		home := os.Getenv("HOME")
+		cfile = filepath.Join(home, ".docker/config.json")
+	}
+	b, err := ioutil.ReadFile(cfile)
+	if err == nil {
+		var dac dockerAuthConfig
+		err = json.Unmarshal(b, &dac)
+		return &dac, err
+	}
+	return nil, err
 }
