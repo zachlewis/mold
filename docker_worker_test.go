@@ -22,21 +22,26 @@ func Test_Worker_Configure(t *testing.T) {
 }
 
 func Test_Worker_Build(t *testing.T) {
-	if err := testBld.Setup(); err != nil {
+	bc, bld, _ := initializeBuild(testBldCfg, "")
+
+	if err := bld.Configure(bc); err != nil {
+		t.Fatal(err)
+	}
+	if err := bld.Setup(); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := testBld.Build(); err != nil {
-		testBld.Teardown()
+	if err := bld.Build(); err != nil {
+		bld.Teardown()
 		t.Fatal(err)
 	}
 
-	if err := testBld.Teardown(); err != nil {
+	if err := bld.Teardown(); err != nil {
 		t.Log(err)
 		t.Fail()
 	}
 
-	for _, v := range testBld.bc {
+	for _, v := range bld.bc {
 		t.Log(v.Name, v.Status())
 	}
 }

@@ -19,8 +19,8 @@ type BuildConfig struct {
 	BranchTag string
 	// LastCommit for the branch
 	LastCommit string
-	// Working dir of the whole build.  This is essentially the root of the code
-	// repo on the host.
+	// Working dir of the whole build.  This is where your git repo from the host
+	// is mounted
 	WorkingDir string
 	// Service i.e. containers needed to perform build
 	Services []DockerRunConfig
@@ -41,6 +41,7 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// Set working directory
 	if bc.WorkingDir, err = os.Getwd(); err == nil {
 		// Set artifact defaults

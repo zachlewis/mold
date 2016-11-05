@@ -18,6 +18,7 @@ build:
       workdir: /go/src/github.com/euforia/mold
       environment:
           - TEST_ENV=test_env
+      save: true
       commands:
           - hostname
           - uname -a

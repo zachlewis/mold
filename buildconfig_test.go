@@ -39,6 +39,12 @@ func Test_NewBuildConfig(t *testing.T) {
 		t.Log("name should be set")
 		t.Fail()
 	}
+	for _, v := range testBc.Build {
+		if v.Image == "" {
+			t.Fatal("image should be set")
+
+		}
+	}
 
 	testBc.Name += "-test1"
 	b, _ = json.MarshalIndent(testBc, "", "  ")

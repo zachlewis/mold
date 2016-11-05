@@ -15,6 +15,7 @@ clean:
 	go clean -i ./...
 
 test:
+	rm -f coverage.out
 	go test -v -coverprofile=coverage.out ./...
 
 deps:

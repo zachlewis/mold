@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -74,9 +75,12 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 	bc := assembleBuildContainers(cfg)
 	bld.bc = make([]*containerState, len(bc))
 	for i, s := range bc {
-		cs := &containerState{ContainerConfig: s, Type: BuildContainerType}
+		cs := &containerState{
+			ContainerConfig: s,
+			Type:            BuildContainerType,
+			save:            bld.cfg.Build[i].Save,
+		}
 		//cs.Name = fmt.Sprintf("%s-%d", bld.cfg.Name, i)
-
 		cs.Name = fmt.Sprintf("%s-%d-%d", bld.cfg.Name, i, time.Now().UnixNano())
 		cs.Network = bld.defaultNetConfig()
 		bld.bc[i] = cs
@@ -135,6 +139,17 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 	return err
 }
 
+func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
+	var auth *types.AuthConfig
+	for rh, av := range bld.authCfg.Auths {
+		if strings.HasSuffix(rh, registry) {
+			auth = &av
+			break
+		}
+	}
+	return auth
+}
+
 // Publish the artifact/s based on the config
 func (bld *DockerWorker) Publish(names ...string) error {
 	if bld.authCfg == nil || len(bld.authCfg.Auths) == 0 {
@@ -146,7 +161,9 @@ func (bld *DockerWorker) Publish(names ...string) error {
 			if bld.aborted {
 				return errAborted
 			}
-			if err := bld.dkr.PushImage(v.RegistryPath(), nil, os.Stdout); err != nil {
+
+			auth := bld.getRegistryAuth(v.Registry)
+			if err := bld.dkr.PushImage(v.RegistryPath(), auth, os.Stdout); err != nil {
 				return err
 			}
 		}
@@ -155,11 +172,14 @@ func (bld *DockerWorker) Publish(names ...string) error {
 			if bld.aborted {
 				return errAborted
 			}
+
 			a := bld.cfg.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
 			}
-			if err := bld.dkr.PushImage(a.RegistryPath(), nil, os.Stdout); err != nil {
+
+			auth := bld.getRegistryAuth(a.Registry)
+			if err := bld.dkr.PushImage(a.RegistryPath(), auth, os.Stdout); err != nil {
 				return err
 			}
 		}
@@ -261,10 +281,19 @@ func (bld *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 // Teardown stops and removes all services spun up before the build as part of cleanup
 func (bld *DockerWorker) Teardown() error {
 	var err error
+	// remove service containers
 	for _, cs := range bld.sc {
 		e := bld.dkr.RemoveContainer(cs.ID(), true)
 		err = mergeErrors(err, e)
 	}
+	// remove build containers.
+	for _, cs := range bld.bc {
+		if !cs.save {
+			e := bld.dkr.RemoveContainer(cs.ID(), true)
+			err = mergeErrors(err, e)
+		}
+	}
+
 	err = mergeErrors(err, bld.dkr.RemoveNetwork(bld.netID))
 	return err
 }

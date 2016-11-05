@@ -238,17 +238,17 @@ Options:
 
   -t        Target to build     (default: all)
 
-            build      Only perform a build.
+            build       Only perform the build phase.
 
-            artifacts  Generate all artifacts.  Specific artifacts can be built
-                       using artifacts/< image_name > as the target where
-                       < image_name > would be that as specified in your
-                       configuration.
+            artifacts   Only generate artifacts.  Specific artifacts can be built
+                        using artifacts/<image_name> as the target where
+                        <image_name> would be that as specified in your
+                        configuration.
 
-            publish    Publish all artifacts.  Specific artifacts can be published
-                       using publish/< image_name > as the target where
-                       < image_name > would be that as specified in your
-                       configuration
+            publish     Only publish artifacts.  Specific artifacts can be published
+                        using publish/<image_name> as the target where
+                        <image_name> would be that as specified in your
+                        configuration.
 
 `, *dockerURI, *buildFile)
 }

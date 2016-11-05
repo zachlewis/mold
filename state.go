@@ -18,6 +18,7 @@ type containerState struct {
 	Type   ContainerType // service or build
 	status string        // build status of the container
 	done   bool          // container execution completed
+	save   bool          // keep the container after run completes
 }
 
 func (cs *containerState) Status() string {
