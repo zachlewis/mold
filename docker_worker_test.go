@@ -57,3 +57,11 @@ func Test_Worker_GeneratesArtifacts(t *testing.T) {
 		t.Fatal("should fail with artifact not found")
 	}
 }
+
+func Test_Worker_Publish_fail(t *testing.T) {
+	_, bld, _ := initializeBuild(testBldCfg, "")
+	bld.authCfg = nil
+	if err := testBld.Publish(); err == nil {
+		t.Fatal("should fail")
+	}
+}

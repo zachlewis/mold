@@ -35,7 +35,7 @@ type DockerWorker struct {
 
 	log io.Writer
 	// Auth config for registry operations
-	authCfg *dockerAuthConfig
+	authCfg *DockerAuthConfig
 }
 
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
@@ -138,15 +138,15 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 // Publish the artifact/s based on the config
 func (bld *DockerWorker) Publish(names ...string) error {
 	if bld.authCfg == nil || len(bld.authCfg.Auths) == 0 {
-		bld.log.Write([]byte("[publish] Not publishing.  Registry auth not specified\n"))
-		return nil
+		//bld.log.Write([]byte("[publish] Not publishing.  registry auth not specified\n"))
+		return fmt.Errorf("registry auth not specified")
 	}
 	if len(names) == 0 {
 		for _, v := range bld.cfg.Artifacts.Images {
 			if bld.aborted {
 				return errAborted
 			}
-			if err := bld.dkr.PushImage(v.RegistryPath(), os.Stdout); err != nil {
+			if err := bld.dkr.PushImage(v.RegistryPath(), nil, os.Stdout); err != nil {
 				return err
 			}
 		}
@@ -159,7 +159,7 @@ func (bld *DockerWorker) Publish(names ...string) error {
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
 			}
-			if err := bld.dkr.PushImage(a.RegistryPath(), os.Stdout); err != nil {
+			if err := bld.dkr.PushImage(a.RegistryPath(), nil, os.Stdout); err != nil {
 				return err
 			}
 		}

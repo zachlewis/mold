@@ -289,8 +289,12 @@ func (dkr *Docker) RemoveNetwork(networkID string) error {
 }
 
 // PushImage pushes a local docker image up to a registry
-func (dkr *Docker) PushImage(imageRef string, logWriter io.Writer) error {
+func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWriter io.Writer) error {
 	opts := types.ImagePushOptions{}
+	if authCfg != nil {
+		opts.RegistryAuth = authCfg.Auth
+	}
+
 	rsp, err := dkr.cli.ImagePush(context.Background(), imageRef, opts)
 	if err != nil {
 		return err
@@ -372,12 +376,14 @@ type imgPullProgress struct {
 	ProgressDetail imgPullProgressDetail
 }
 
-type dockerAuthConfig struct {
+// DockerAuthConfig contains the auth config to perform registry operations
+type DockerAuthConfig struct {
 	Auths       map[string]types.AuthConfig `json:"auths"`
 	HTTPHeaders map[string]string           `json:"HttpHeaders"`
 }
 
-func (dac *dockerAuthConfig) DockerHubAuth() *types.AuthConfig {
+// DockerHubAuth returns the authconfig for docker hub
+func (dac *DockerAuthConfig) DockerHubAuth() *types.AuthConfig {
 	for k, v := range dac.Auths {
 		pp := strings.Split(k, ".")
 		// make sure the fqdn has atleast 3 parts for docker hub registry
@@ -390,7 +396,7 @@ func (dac *dockerAuthConfig) DockerHubAuth() *types.AuthConfig {
 	return nil
 }
 
-func readDockerAuthConfig(cfgfile string) (*dockerAuthConfig, error) {
+func readDockerAuthConfig(cfgfile string) (*DockerAuthConfig, error) {
 	cfile := cfgfile
 	if cfile == "" {
 		home := os.Getenv("HOME")
@@ -398,7 +404,7 @@ func readDockerAuthConfig(cfgfile string) (*dockerAuthConfig, error) {
 	}
 	b, err := ioutil.ReadFile(cfile)
 	if err == nil {
-		var dac dockerAuthConfig
+		var dac DockerAuthConfig
 		err = json.Unmarshal(b, &dac)
 		return &dac, err
 	}
