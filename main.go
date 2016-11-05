@@ -64,7 +64,11 @@ func main() {
 	case "":
 		err = lc.Run(buildCfg)
 	default:
-		err = lc.RunTarget(buildCfg, target, targetArg)
+		if targetArg == "" {
+			err = lc.RunTarget(buildCfg, target)
+		} else {
+			err = lc.RunTarget(buildCfg, target, targetArg)
+		}
 	}
 
 	if err != nil {
