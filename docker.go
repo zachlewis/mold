@@ -262,11 +262,8 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 			logWriter.Write(d)
 		}
 	}
-	if e != nil {
-		logWriter.Write([]byte(prefix + " ERR " + e.Error() + "\n"))
-	}
-	//}()
-	return nil
+
+	return e
 }
 
 // RemoveImage locally from the host
