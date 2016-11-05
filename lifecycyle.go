@@ -99,7 +99,7 @@ func (lc *LifeCycle) RunTarget(cfg *BuildConfig, target LifeCyclePhase, args ...
 			}
 		}
 		if e := lc.worker.Teardown(); e != nil {
-			log.Printf("ERR [Teardown] %v", e)
+			log.Printf("ERR [%s] %v", lifeCycleTeardown, e)
 		}
 
 	case lifeCyleArtifacts:
