@@ -242,17 +242,25 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 		}
 		b = b[:len(b)-1]
 
-		var m map[string]string
+		var m map[string]interface{}
 		if err = json.Unmarshal(b, &m); err != nil {
 			logWriter.Write([]byte(fmt.Sprintf("%s ERR %s %s\n", prefix, err, b)))
 			e = err
 			break
 		}
 
-		//if v, ok := m["stream"]; ok {
-		logWriter.Write([]byte(prefix + " "))
-		logWriter.Write([]byte(m["stream"]))
-		//}
+		if v, ok := m["error"]; ok {
+			e = fmt.Errorf(v.(string))
+			break
+		}
+
+		if v, ok := m["stream"]; ok {
+			str := v.(string)
+			logWriter.Write([]byte(prefix + " " + str))
+		} else {
+			d := append([]byte(prefix+" "), b...)
+			logWriter.Write(d)
+		}
 	}
 	if e != nil {
 		logWriter.Write([]byte(prefix + " ERR " + e.Error() + "\n"))
