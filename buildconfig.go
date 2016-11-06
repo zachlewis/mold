@@ -19,9 +19,9 @@ type BuildConfig struct {
 	BranchTag string
 	// LastCommit for the branch
 	LastCommit string
-	// Working dir of the whole build.  This is where your git repo from the host
-	// is mounted
-	WorkingDir string
+	// Context is the root of the build.  This defaults to the current working
+	// directory
+	Context string
 	// Service i.e. containers needed to perform build
 	Services []DockerRunConfig
 	// Builds to perform
@@ -42,33 +42,37 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 		return nil, err
 	}
 
-	// Set working directory
-	if bc.WorkingDir, err = os.Getwd(); err == nil {
-		// Set artifact defaults
-		for i, v := range bc.Artifacts.Images {
-			// set the context to the working dir if not supplied
-			if len(v.Context) == 0 {
-				bc.Artifacts.Images[i].Context = bc.WorkingDir
+	// Set current working directory if not specified
+	if bc.Context == "" || bc.Context == "." || bc.Context == "./" {
+		if bc.Context, err = os.Getwd(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Set artifact defaults
+	for i, v := range bc.Artifacts.Images {
+		// set the context to the working dir if not supplied
+		if len(v.Context) == 0 {
+			bc.Artifacts.Images[i].Context = bc.Context
+		}
+	}
+	bc.Artifacts.setDefaults()
+	bc.checkRepoInfo()
+	bc.readEnvVars()
+
+	// try to set the name based on the repo url.
+	if bc.RepoURL != "" {
+		if pp := strings.Split(bc.RepoURL, "/"); len(pp) > 1 {
+			if n := strings.TrimSuffix(pp[len(pp)-1], ".git"); n != "" {
+				bc.Name = n
 			}
 		}
-		bc.Artifacts.setDefaults()
-		bc.checkRepoInfo()
-		bc.readEnvVars()
+	}
 
-		// try to set the name based on the repo url.
-		if bc.RepoURL != "" {
-			if pp := strings.Split(bc.RepoURL, "/"); len(pp) > 1 {
-				if n := strings.TrimSuffix(pp[len(pp)-1], ".git"); n != "" {
-					bc.Name = n
-				}
-			}
-		}
-
-		// set unique name based on name, branch and commit
-		bc.Name += "-" + bc.BranchTag
-		if len(bc.LastCommit) > 7 {
-			bc.Name += "-" + bc.LastCommit[:8]
-		}
+	// set unique name based on name, branch and commit
+	bc.Name += "-" + bc.BranchTag
+	if len(bc.LastCommit) > 7 {
+		bc.Name += "-" + bc.LastCommit[:8]
 	}
 
 	return &bc, err
@@ -77,7 +81,7 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 // check and set repo info and naming structure
 func (bc *BuildConfig) checkRepoInfo() {
 
-	name, bt, lc := getRepoInfo(bc.WorkingDir)
+	name, bt, lc := getRepoInfo(bc.Context)
 	if len(bc.Name) == 0 && len(name) > 0 {
 		bc.Name = name
 	}

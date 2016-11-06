@@ -61,17 +61,6 @@ func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.Cmd = b.Commands
 		cc.Container.Env = b.Environment
-		/*bcs[i] = &ContainerConfig{
-			Container: &container.Config{
-				Image: b.Image,
-				Cmd:   b.Commands,
-				Env:   b.Environment,
-			},
-			Network: &network.NetworkingConfig{
-				EndpointsConfig: map[string]*network.EndpointSettings{},
-			},
-			Host: &container.HostConfig{},
-		}*/
 		bcs[i] = cc
 	}
 	return bcs
@@ -86,36 +75,10 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
 		cc.Container.Cmd = []string{"/bin/bash", "-cex", b.BuildCmds()}
 		cc.Container.Env = b.Environment
-		cc.Host.Binds = []string{fmt.Sprintf("%s:%s", bc.WorkingDir, b.Workdir)}
+		cc.Host.Binds = []string{fmt.Sprintf("%s:%s", bc.Context, b.Workdir)}
 		cc.Host.Mounts = []mount.Mount{
-			mount.Mount{Target: b.Workdir, Source: bc.WorkingDir, Type: mount.TypeBind},
+			mount.Mount{Target: b.Workdir, Source: bc.Context, Type: mount.TypeBind},
 		}
-		/*bconts[i] = &ContainerConfig{
-			Container: &container.Config{
-				Image:      b.Image,
-				WorkingDir: b.Workdir,
-				Volumes: map[string]struct{}{
-					b.Workdir: struct{}{},
-				},
-				Cmd: []string{"/bin/bash", "-cex", b.BuildCmds()},
-				Env: b.Environment,
-				//Hostname:    name,
-				//Labels:      nil,
-				//Healthcheck: nil,
-			},
-			Network: &network.NetworkingConfig{
-				EndpointsConfig: map[string]*network.EndpointSettings{},
-			},
-			Host: &container.HostConfig{
-				Binds: []string{fmt.Sprintf("%s:%s", bc.WorkingDir, b.Workdir)},
-				Mounts: []mount.Mount{
-					mount.Mount{Target: b.Workdir, Source: bc.WorkingDir, Type: mount.TypeBind},
-				},
-				//DNS:        []string{},
-				//DNSOptions: []string{},
-				//DNSSearch:  []string{},
-			},
-		}*/
 		bconts[i] = cc
 
 		// Mount docker.sock in container if requested.
