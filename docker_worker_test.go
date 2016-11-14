@@ -66,7 +66,17 @@ func Test_Worker_GeneratesArtifacts(t *testing.T) {
 func Test_Worker_Publish_fail(t *testing.T) {
 	_, bld, _ := initializeBuild(testBldCfg, "")
 	bld.authCfg = nil
-	if err := testBld.Publish(); err == nil {
+	if err := bld.Publish(); err == nil {
 		t.Fatal("should fail")
+	}
+}
+
+func Test_Worker_Publish(t *testing.T) {
+	bcfg, bld, _ := initializeBuild("./testdata/mold4.yml", "")
+	if err := bld.Configure(bcfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := bld.Publish(); err != nil {
+		t.Fatal(err)
 	}
 }

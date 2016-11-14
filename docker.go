@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -295,6 +296,8 @@ func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWrit
 		opts.RegistryAuth = authCfg.Auth
 	}
 
+	log.Printf("%+v", *authCfg)
+
 	rsp, err := dkr.cli.ImagePush(context.Background(), imageRef, opts)
 	if err != nil {
 		return err
@@ -311,11 +314,17 @@ func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWrit
 			break
 		}
 
-		var m map[string]string
+		var m map[string]interface{}
 		if err = json.Unmarshal(b, &m); err != nil {
 			break
 		}
-		logWriter.Write([]byte(m["status"]))
+
+		if st, ok := m["status"]; ok {
+			status := st.(string)
+			logWriter.Write([]byte(status + "\n"))
+		} else {
+			logWriter.Write(b)
+		}
 	}
 
 	return err

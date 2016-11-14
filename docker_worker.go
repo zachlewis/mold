@@ -44,7 +44,10 @@ type DockerWorker struct {
 func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
 	d = &DockerWorker{dkr: dcli, log: os.Stdout, abort: make(chan bool, 1)}
 	// set up registry auth. pushes will not happen if failed
-	d.authCfg, _ = readDockerAuthConfig("")
+	if d.authCfg, err = readDockerAuthConfig(""); err != nil {
+		log.Println("WRN", err)
+		err = nil
+	}
 
 	if d.dkr == nil {
 		d.dkr, err = NewDocker("")
@@ -140,6 +143,10 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 }
 
 func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
+	if registry == "" {
+		return bld.authCfg.DockerHubAuth()
+	}
+
 	var auth *types.AuthConfig
 	for rh, av := range bld.authCfg.Auths {
 		if strings.HasSuffix(rh, registry) {
@@ -147,6 +154,7 @@ func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 			break
 		}
 	}
+
 	return auth
 }
 

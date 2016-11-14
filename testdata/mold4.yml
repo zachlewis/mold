@@ -1,0 +1,7 @@
+
+# Test publish option
+artifacts:
+    publish:
+        - master
+    images:
+        - name: euforia/etcd
