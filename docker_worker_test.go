@@ -76,6 +76,7 @@ func Test_Worker_Publish(t *testing.T) {
 	if err := bld.Configure(bcfg); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := bld.Publish(); err != nil {
 		t.Fatal(err)
 	}

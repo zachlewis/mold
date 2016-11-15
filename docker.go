@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -290,14 +289,13 @@ func (dkr *Docker) RemoveNetwork(networkID string) error {
 }
 
 // PushImage pushes a local docker image up to a registry
-func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWriter io.Writer) error {
+func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWriter io.Writer, prefix string) error {
 	opts := types.ImagePushOptions{}
 	if authCfg != nil {
 		opts.RegistryAuth = authCfg.Auth
 	}
 
-	log.Printf("%+v", *authCfg)
-
+	logWriter.Write([]byte(prefix + " Publishing image: " + imageRef + "\n"))
 	rsp, err := dkr.cli.ImagePush(context.Background(), imageRef, opts)
 	if err != nil {
 		return err
@@ -321,9 +319,12 @@ func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWrit
 
 		if st, ok := m["status"]; ok {
 			status := st.(string)
-			logWriter.Write([]byte(status + "\n"))
+			logWriter.Write([]byte(prefix + " " + status + "\n"))
+		} else if er, ok := m["error"]; ok {
+			errStr := er.(string)
+			logWriter.Write([]byte(prefix + " " + errStr + "\n"))
 		} else {
-			logWriter.Write(b)
+			logWriter.Write(append([]byte(prefix), b...))
 		}
 	}
 

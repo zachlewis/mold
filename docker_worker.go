@@ -171,7 +171,7 @@ func (bld *DockerWorker) Publish(names ...string) error {
 			}
 
 			auth := bld.getRegistryAuth(v.Registry)
-			if err := bld.dkr.PushImage(v.RegistryPath(), auth, os.Stdout); err != nil {
+			if err := bld.dkr.PushImage(v.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", v.Name)); err != nil {
 				return err
 			}
 		}
@@ -187,7 +187,7 @@ func (bld *DockerWorker) Publish(names ...string) error {
 			}
 
 			auth := bld.getRegistryAuth(a.Registry)
-			if err := bld.dkr.PushImage(a.RegistryPath(), auth, os.Stdout); err != nil {
+			if err := bld.dkr.PushImage(a.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", name)); err != nil {
 				return err
 			}
 		}

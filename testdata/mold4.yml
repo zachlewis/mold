@@ -4,4 +4,4 @@ artifacts:
     publish:
         - master
     images:
-        - name: euforia/etcd
+        - name: euforia/etcd:3.0.8
