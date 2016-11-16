@@ -4,5 +4,5 @@ mold
 Godeps/Readme
 
 debug
-
+.DS_Store
 debug.test
