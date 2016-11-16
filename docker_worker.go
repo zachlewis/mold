@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -103,34 +104,48 @@ func (bld *DockerWorker) defaultNetConfig() *network.NetworkingConfig {
 
 // GenerateArtifacts builds docker images
 func (bld *DockerWorker) GenerateArtifacts(names ...string) error {
+	var ics []ImageConfig
 	if len(names) == 0 {
-		for _, a := range bld.cfg.Artifacts.Images {
-			if bld.aborted {
-				return errAborted
-			}
-			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", a.Name)))
-			if err := bld.dkr.BuildImage(&a, bld.log, fmt.Sprintf("[artifacts/%s]", a.Name)); err != nil {
-				return err
-			}
-			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", a.Name)))
-		}
+		ics = bld.cfg.Artifacts.Images
 	} else {
 		for _, name := range names {
-			if bld.aborted {
-				return errAborted
-			}
 			a := bld.cfg.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
 			}
-			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", a.Name)))
-			if err := bld.dkr.BuildImage(a, bld.log, fmt.Sprintf("[artifacts/%s]", a.Name)); err != nil {
-				return err
-			}
-			bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", a.Name)))
+			ics = append(ics, *a)
 		}
 	}
-	return nil
+	var err error
+	for _, ic := range ics {
+		if bld.aborted {
+			return errAborted
+		}
+		bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", ic.Name)))
+		err = mergeErrors(err, bld.generateArtifact(&ic))
+		bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", ic.Name)))
+	}
+	return err
+}
+
+func (bld *DockerWorker) generateArtifact(ic *ImageConfig) error {
+	bld.done = make(chan bool)
+	err := bld.dkr.BuildImageAsync(ic, bld.log, fmt.Sprintf("[artifacts/%s]", ic.Name), bld.done)
+	if err != nil {
+		return err
+	}
+	select {
+	case ok := <-bld.done:
+		if ok {
+			bld.log.Write([]byte("[artifacts] Completing...\n"))
+		} else {
+			bld.log.Write([]byte("[artifacts] Completing with error(s)...\n"))
+		}
+	case <-bld.abort:
+		bld.RemoveArtifacts()
+		bld.log.Write([]byte("[artifacts] Aborting...\n"))
+	}
+	return err
 }
 
 // RemoveArtifacts removes all local artifacts it as definted in the config
@@ -143,18 +158,30 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 }
 
 func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
-	if registry == "" {
-		return bld.authCfg.DockerHubAuth()
-	}
-
 	var auth *types.AuthConfig
-	for rh, av := range bld.authCfg.Auths {
-		if strings.HasSuffix(rh, registry) {
-			auth = &av
-			break
+	if registry == "" {
+		auth = bld.authCfg.DockerHubAuth()
+	} else {
+		for rh, av := range bld.authCfg.Auths {
+			if strings.HasSuffix(rh, registry) {
+				auth = &av
+				if auth.ServerAddress == "" {
+					auth.ServerAddress = rh
+				}
+				break
+			}
 		}
 	}
 
+	if auth.Auth != "" && auth.Username == "" {
+		if s, err := base64.StdEncoding.DecodeString(auth.Auth); err == nil {
+			a := strings.Split(string(s), ":")
+			if len(a) == 2 {
+				auth.Username = a[0]
+				auth.Password = a[1]
+			}
+		}
+	}
 	return auth
 }
 
@@ -164,12 +191,12 @@ func (bld *DockerWorker) Publish(names ...string) error {
 		//bld.log.Write([]byte("[publish] Not publishing.  registry auth not specified\n"))
 		return fmt.Errorf("registry auth not specified")
 	}
+
 	if len(names) == 0 {
 		for _, v := range bld.cfg.Artifacts.Images {
 			if bld.aborted {
 				return errAborted
 			}
-
 			auth := bld.getRegistryAuth(v.Registry)
 			if err := bld.dkr.PushImage(v.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", v.Name)); err != nil {
 				return err
@@ -362,7 +389,6 @@ func (bld *DockerWorker) watchBuild() {
 						state  types.ContainerState
 					)
 					if cj, err := cli.ContainerInspect(context.Background(), msg.Actor.ID); err == nil {
-						//log.Printf("DOCKER %s %+v", cj.Image, cj.State)
 						if cj.State.ExitCode != 0 {
 							status = "failed"
 						} else {

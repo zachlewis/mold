@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -206,8 +207,8 @@ func (dkr *Docker) RemoveContainer(containerID string, force bool) error {
 }
 
 // BuildImage builds a docker images based on the config and writes the log out
-// to the the specified Writer.  This is a blocking call.
-func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix string) error {
+// to the the specified Writer.  This is an async call.
+func (dkr *Docker) BuildImageAsync(ic *ImageConfig, logWriter io.Writer, prefix string, done chan bool) error {
 	bldCxt, err := tarDirectory(ic.Context, nil)
 	if err != nil {
 		return err
@@ -227,43 +228,45 @@ func (dkr *Docker) BuildImage(ic *ImageConfig, logWriter io.Writer, prefix strin
 		return err
 	}
 
-	defer rsp.Body.Close()
-	var (
-		buf = bufio.NewReader(rsp.Body)
-		e   error
-	)
-	for {
-		b, err := buf.ReadBytes('\n')
-		if err != nil {
-			if err != io.EOF {
-				e = err
+	go func() {
+		logWriter.Write([]byte(fmt.Sprintf("%s Starting a routine to watch the image build...\n", prefix)))
+		var (
+			buf = bufio.NewReader(rsp.Body)
+			e   error
+		)
+		for {
+			b, err := buf.ReadBytes('\n')
+			if err != nil {
+				if err != io.EOF {
+					e = err
+				}
+				break
 			}
-			break
-		}
-		b = b[:len(b)-1]
+			b = b[:len(b)-1]
+			var m map[string]interface{}
+			if err = json.Unmarshal(b, &m); err != nil {
+				logWriter.Write([]byte(fmt.Sprintf("%s ERR %s %s\n", prefix, err, b)))
+				e = err
+				break
+			}
 
-		var m map[string]interface{}
-		if err = json.Unmarshal(b, &m); err != nil {
-			logWriter.Write([]byte(fmt.Sprintf("%s ERR %s %s\n", prefix, err, b)))
-			e = err
-			break
-		}
+			if v, ok := m["error"]; ok {
+				e = fmt.Errorf(v.(string))
+				break
+			}
 
-		if v, ok := m["error"]; ok {
-			e = fmt.Errorf(v.(string))
-			break
+			if v, ok := m["stream"]; ok {
+				str := v.(string)
+				logWriter.Write([]byte(prefix + " " + str))
+			} else {
+				d := append([]byte(prefix+" "), b...)
+				logWriter.Write(d)
+			}
 		}
-
-		if v, ok := m["stream"]; ok {
-			str := v.(string)
-			logWriter.Write([]byte(prefix + " " + str))
-		} else {
-			d := append([]byte(prefix+" "), b...)
-			logWriter.Write(d)
-		}
-	}
-
-	return e
+		rsp.Body.Close()
+		done <- (e == nil)
+	}()
+	return nil
 }
 
 // RemoveImage locally from the host
@@ -288,11 +291,24 @@ func (dkr *Docker) RemoveNetwork(networkID string) error {
 	return dkr.cli.NetworkRemove(context.Background(), networkID)
 }
 
+func (dkr *Docker) GetAuthBase64(authConfig types.AuthConfig) (string, error) {
+	auth, err := json.Marshal(authConfig)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(auth), nil
+}
+
 // PushImage pushes a local docker image up to a registry
 func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWriter io.Writer, prefix string) error {
 	opts := types.ImagePushOptions{}
 	if authCfg != nil {
-		opts.RegistryAuth = authCfg.Auth
+		if a, err := dkr.GetAuthBase64(*authCfg); err != nil {
+			logWriter.Write([]byte(fmt.Sprintf("%s Error: %s\n", prefix, err.Error())))
+			return err
+		} else {
+			opts.RegistryAuth = a
+		}
 	}
 
 	logWriter.Write([]byte(prefix + " Publishing image: " + imageRef + "\n"))
@@ -323,6 +339,8 @@ func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWrit
 		} else if er, ok := m["error"]; ok {
 			errStr := er.(string)
 			logWriter.Write([]byte(prefix + " " + errStr + "\n"))
+			err = fmt.Errorf(errStr)
+			break
 		} else {
 			logWriter.Write(append([]byte(prefix), b...))
 		}
@@ -358,7 +376,6 @@ func (dkr *Docker) PullImage(imageRef string, logWriter io.Writer, prefix string
 		}
 
 		if m.ProgressDetail.Current == m.ProgressDetail.Total && m.ProgressDetail.Total > 0 {
-			//fmt.Printf("%s ... %s %d bytes\n", m.Status, m.ID, m.ProgressDetail.Total)
 			logWriter.Write([]byte(fmt.Sprintf("%s %s: %s %d bytes\n", prefix, m.Status, m.ID, m.ProgressDetail.Total)))
 		}
 
@@ -399,6 +416,9 @@ func (dac *DockerAuthConfig) DockerHubAuth() *types.AuthConfig {
 		// make sure the fqdn has atleast 3 parts for docker hub registry
 		if len(pp) > 2 {
 			if pp[len(pp)-2] == "docker" {
+				if v.ServerAddress == "" {
+					v.ServerAddress = k
+				}
 				return &v
 			}
 		}

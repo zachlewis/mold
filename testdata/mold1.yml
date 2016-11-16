@@ -46,7 +46,7 @@ artifacts:
     # publish on all branches/tags
     publish:
     # Default registry to use if not specified. Blank uses docker hub
-    registry: test.docker.registry
+    registry: #test.docker.registry
     images:
         - name: euforia/mold-test
           dockerfile: testdata/Dockerfile

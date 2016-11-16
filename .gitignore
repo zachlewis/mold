@@ -2,3 +2,7 @@ vendor/
 build/
 mold
 Godeps/Readme
+
+debug
+
+debug.test

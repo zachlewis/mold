@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func Test_Worker_Configure(t *testing.T) {
 	if err := testBld.Configure(testBc); err != nil {
@@ -22,26 +25,21 @@ func Test_Worker_Configure(t *testing.T) {
 }
 
 func Test_Worker_Build(t *testing.T) {
-	bc, bld, _ := initializeBuild(testBldCfg, "")
-
-	if err := bld.Configure(bc); err != nil {
-		t.Fatal(err)
-	}
-	if err := bld.Setup(); err != nil {
+	if err := testBld.Setup(); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := bld.Build(); err != nil {
-		bld.Teardown()
+	if err := testBld.Build(); err != nil {
+		testBld.Teardown()
 		t.Fatal(err)
 	}
 
-	if err := bld.Teardown(); err != nil {
+	if err := testBld.Teardown(); err != nil {
 		t.Log(err)
 		t.Fail()
 	}
 
-	for _, v := range bld.bc {
+	for _, v := range testBld.bc {
 		t.Log(v.Name, v.Status())
 	}
 }
@@ -53,13 +51,30 @@ func Test_Worker_GeneratesArtifacts(t *testing.T) {
 	if err := testBld.RemoveArtifacts(); err != nil {
 		t.Fatal(err)
 	}
-
 	if err := testBld.GenerateArtifacts("euforia/mold-test"); err != nil {
 		t.Fatal(err)
 	}
 	testBld.RemoveArtifacts()
 	if err := testBld.GenerateArtifacts("foo"); err == nil {
 		t.Fatal("should fail with artifact not found")
+	}
+}
+
+func Test_Worker_GeneratesArtifacts_Abort(t *testing.T) {
+	bcfg, bld, _ := initializeBuild("./testdata/mold1.yml", "")
+	if err := bld.Configure(bcfg); err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		if err := bld.GenerateArtifacts(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	<-time.After(1500 * time.Millisecond)
+	if err := bld.Abort(); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -71,13 +86,13 @@ func Test_Worker_Publish_fail(t *testing.T) {
 	}
 }
 
-func Test_Worker_Publish(t *testing.T) {
+func Test_Worker_Publish_fail2(t *testing.T) {
 	bcfg, bld, _ := initializeBuild("./testdata/mold4.yml", "")
 	if err := bld.Configure(bcfg); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := bld.Publish(); err != nil {
-		t.Fatal(err)
+	if err := bld.Publish(); err == nil {
+		t.Fatal("should fail with image not found")
 	}
 }
