@@ -20,16 +20,14 @@
 
   <header>
     <div class="wrap">
-      <h2>Mold</h2>
-      <p>Mold is a tool to test, build, package and publish your software using docker.  It simplifies the development lifecycle by abstracting the underlying common, repatative and complex tasks.</p>
+      <h1>Mold</h1>
+      <p>Mold is a tool to test, build, package and publish your software using docker.  It simplifies docker based development cycles by abstracting steps that are tideous and repetitive.</p>
       <p>Each build is run in it's own container.  The build is performed by running the user supplied commands in the container.  This is where tests, building of binaries and such tasks run.
       <p>Once the build has completed, images are generated which can then be published to a registry.
     </div>
   </header>
 
-  <header>
-    <div class="wrap"><h2>Docker CI/CD flow with Mold</h2></div>
-  </header>
+  <div class="wrap"><h2>Docker CI/CD flow with Mold</h2></div>
 
   <article class="full">
   <div class="wrap">
@@ -95,32 +93,39 @@
 
   <div class="panel-content js-panel-content js-panel-content-branch" data-step="branch">
     <h3 style="color:#932d70">Create a branch</h3>
-    <p>When you're working on a project, different features are ready a different times. Branching helps manage this workflow.</p>
+    <p>When working on a project, different features are ready a different times. Branching helps manage this workflow.</p>
+    <p>By creating branches on a per feature/issue bases, projects can be tested, built and deployed as soon as it is available.  This in turn leads to a faster development cycle.</p>
   </div>
   <div class="panel-content js-panel-content js-panel-content-commits" data-step="commits">
-    <h3 style="color:#932d70">Add commits and push</h3>
+    <h3 style="color:#932d70">Add commits and/or push</h3>
     <p>Once your branch has been created, it's time to start making changes. Whenever you add, edit, or delete a file, you're making a commit, and adding them to your branch. This process of adding commits keeps track of your progress as you work on a feature branch.</p>
-    <p>Once changes have been committed, you push the code back to the repo.
-
+    <p>Once changes have been committed, optionally you push the code up to a repo.</p>
   </div>
   <div class="panel-content js-panel-content js-panel-content-build" data-step="build">
-    <h3 style="color:#932d70">Test, Build, Package, Publish</h3>
-    <p>Once you've committed and/or pushed your code, you run <b>mold</b> which will then test, build, package and publish your app based on the configuration file.</p>
+    <h3 style="color:#932d70">Test, Build, Package and Publish</h3>
+    <p>Once you've committed and/or pushed your code, you run <b>mold</b> which will then test, build, package and publish your app based on your configuration file.</p>
+    <p>Mold will setup the build by creating an isolated network and starting the depdendent services such as a database, message bus etc.</p>
+    <p>After the setup has completed, the application build is started in its own container running the specified commands.</p>
+    <p>Upon a successful build, docker images are created and published to the registry based on specified rules.</p>
   </div>
 
   <div class="panel-content js-panel-content js-panel-content-pr" data-step="pr">
     <h3 style="color:#932d70">Open a Pull Request</h3>
-    <p>Pull Requests initiate discussions about your commits. This allows for reviewing and resolving any concerns regarding the request.</p>
+    <p>Opening a Pull Request allows for a chance to review the code, comment and resolve any potential concerns before actually performing a merge.</p>
+    <p>It acts as a way to control and approve changes to avoid unintended results.</p>
   </div>
 
   <div class="panel-content js-panel-content js-panel-content-code-review" data-step="code-review">
     <h3 style="color:#932d70">Discuss and review your code</h3>
     <p>Once a Pull Request has been opened, the person or team reviewing your changes may have questions or comments.</p>
+    <p>Based on feedback changes may be made to address concerns.</p>
+    <p>At this point <b>mold</b> should be run again to test, build, package and publish.</p>
   </div>
 
   <div class="panel-content js-panel-content js-panel-content-deploy" data-step="deploy">
     <h3 style="color:#932d70">Deploy</h3>
-    <p>Once your pull request has been reviewed and the branch passes your tests, you can deploy your changes to verify them in production. If your branch causes issues, you can roll it back by deploying the existing master into production.</p>
+    <p>Once the branch passes the <b>mold</b> run, you can deploy your changes and verify. If your branch causes issues, you can roll it back by deploying the existing master.</p>
+    <p>As each feature is a branch, multiple features can be testing in parallel in different envrionments.
   </div>
       <div class="panel-content js-panel-content js-panel-content-merge" data-step="merge">
         <h3 style="color:#932d70">Merge</h3>
@@ -138,9 +143,5 @@
     </div>
   </div>
 </article>
-
-
-  <footer>
-  </footer>
 </body>
 </html>
