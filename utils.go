@@ -195,6 +195,8 @@ Options:
 
   -version  Show version
 
+  -var      Show value of vairable specified in the configuration file  (default: NA)
+
   -uri      Docker URI          (default: %s)
 
   -f        Configuration file  (default: %s)

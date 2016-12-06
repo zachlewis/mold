@@ -15,6 +15,7 @@ var (
 	buildTarget = flag.String("t", "", "Build target [build|artifacts|publish]")
 	//notify      = flag.Bool("n", false, `Enable notifications (default "false")`)
 	showVersion = flag.Bool("version", false, "Show version")
+	variable    = flag.String("var", "", "Show value of vairable specified in the configuration file")
 )
 
 func init() {
@@ -37,9 +38,31 @@ func initializeBuild(bldfile, uri string) (*BuildConfig, *DockerWorker, error) {
 	return nil, nil, err
 }
 
+func getVar(key, bldfile string) (string, error) {
+	buildCfg, err := readBuildConfig(bldfile)
+	if err == nil {
+		if len(buildCfg.Variables) > 0 {
+			if val, ok := buildCfg.Variables[key]; ok {
+				return val, nil
+			}
+		}
+		return "", fmt.Errorf("Variable not specified")
+	}
+	return "", err
+}
+
 func main() {
 	if *showVersion {
 		printVersion()
+		os.Exit(0)
+	}
+	if len(*variable) > 0 {
+		val, err := getVar(*variable, *buildFile)
+		if err == nil {
+			fmt.Printf("%s\n", val)
+		} else {
+			log.Println("ERR", err)
+		}
 		os.Exit(0)
 	}
 

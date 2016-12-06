@@ -16,6 +16,7 @@ specify an alternate file you can use the `-f` flag followed by the path to your
       -t       string  Build a specific target only [build|artifact|publish]
       -uri     string  Docker URI (default "unix:///var/run/docker.sock")
       -version         Show version
+      -var     string  Show value of vairable specified in the configuration file  (default: NA)
 
 In most cases you will simply issue the `mold` command.
 

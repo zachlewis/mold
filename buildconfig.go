@@ -32,6 +32,8 @@ type BuildConfig struct {
 	Notifications MultiNotification
 	// Allow docker daemon access in the container
 	AllowDockerAccess bool `yaml:"docker"`
+
+	Variables map[string]string
 }
 
 // NewBuildConfig creates a new config from yaml formatted bytes
