@@ -51,6 +51,7 @@ artifacts:
         - name: euforia/mold-test
           dockerfile: testdata/Dockerfile
           registry:
+          #cache:
 # Send notifications
 notifications:
     slack:
