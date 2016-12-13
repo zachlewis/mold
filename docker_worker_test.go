@@ -93,6 +93,6 @@ func Test_Worker_Publish_fail2(t *testing.T) {
 	}
 
 	if err := bld.Publish(); err == nil {
-		t.Fatal("should fail with image not found")
+		t.Fatalf("should fail with image not found: %+v", bcfg.Artifacts.Images)
 	}
 }

@@ -54,10 +54,12 @@ func DefaultContainerConfig(imageName string) *ContainerConfig {
 
 // ImageConfig holds the configs needed to build an image
 type ImageConfig struct {
-	Name       string
-	Dockerfile string
-	Registry   string
-	Context    string // working directory, url etc.
+	Name        string
+	Dockerfile  string
+	CachedBuild bool `json:"cache"` // whether to enable the no-cache option in docker build
+
+	Registry string
+	Context  string // working directory, url etc.
 
 	baseimage string
 
@@ -218,6 +220,7 @@ func (dkr *Docker) BuildImageAsync(ic *ImageConfig, logWriter io.Writer, prefix 
 		Dockerfile: ic.Dockerfile,
 		Tags:       []string{ic.Name},
 		Remove:     true, // remove intermediate images
+		NoCache:    !ic.CachedBuild,
 	}
 	if len(ic.Registry) > 0 {
 		opts.Tags = append(opts.Tags, ic.RegistryPath())
