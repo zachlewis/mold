@@ -35,4 +35,7 @@ dist: clean
 	GOOS=linux $(BUILD_CMD) -o ./build/$(NAME) .
 	cd ./build && tar -czf $(NAME)-linux-$(VERSION).tgz $(NAME); rm -f $(NAME)
 
+	GOOS=windows GOARCH=amd64 $(BUILD_CMD) -o ./build/$(NAME) .
+	cd ./build && tar -czf $(NAME)-windows-amd64-$(VERSION).tgz $(NAME); rm -f $(NAME)
+
 all: clean ${NAME}
