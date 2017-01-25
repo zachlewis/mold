@@ -75,7 +75,6 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
 		cc.Container.Cmd = []string{"/bin/bash", "-cex", b.BuildCmds()}
 		cc.Container.Env = b.Environment
-		cc.Host.Binds = []string{fmt.Sprintf("%s:%s", bc.Context, b.Workdir)}
 		cc.Host.Mounts = []mount.Mount{
 			mount.Mount{Target: b.Workdir, Source: bc.Context, Type: mount.TypeBind},
 		}
@@ -84,7 +83,6 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 		// Mount docker.sock in container if requested.
 		if bc.AllowDockerAccess {
 			bconts[i].Container.Volumes[dockerSockFile] = struct{}{}
-			bconts[i].Host.Binds = append(bconts[i].Host.Binds, fmt.Sprintf("%s:%s", dockerSockFile, dockerSockFile))
 			bconts[i].Host.Mounts = append(bconts[i].Host.Mounts,
 				mount.Mount{Target: dockerSockFile, Source: dockerSockFile, Type: mount.TypeBind})
 		}
