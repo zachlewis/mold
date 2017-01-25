@@ -2,4 +2,4 @@ FROM alpine
 
 ADD ./mold /usr/bin/
 
-CMD [ "/usr/bin/mold.exe" ]
+CMD [ "/usr/bin/mold" ]
