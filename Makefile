@@ -35,7 +35,7 @@ dist: clean
 	GOOS=linux $(BUILD_CMD) -o ./build/$(NAME) .
 	cd ./build && tar -czf $(NAME)-linux-$(VERSION).tgz $(NAME); rm -f $(NAME)
 
-	GOOS=windows $(BUILD_CMD) -o ./build/$(NAME) .
-	cd ./build && tar -czf $(NAME)-windows-$(VERSION).tgz $(NAME); rm -f $(NAME)
+	GOOS=windows $(BUILD_CMD) -o ./build/$(NAME).exe .
+	cd ./build && zip $(NAME)-windows-$(VERSION).zip $(NAME).exe; rm -f $(NAME).exe
 
 all: clean ${NAME}
