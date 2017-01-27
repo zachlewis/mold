@@ -190,6 +190,11 @@ what it exactly does.
     composetest_build_app_1 exited with code 0
     composetest_build_img_1 exited with code 1
     ```
+    
 2. What are the system requirements to run mold? 
 
     Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/releases). It however requires Docker installed on the system. That also means for the Windows system, it would require 64bit Windows 10 Pro, Enterprise and Education (1511 November update, Build 10586 or later) and Microsoft Hyper-V. Please see the details from the [Docker site](https://docs.docker.com/docker-for-windows/)
+    
+3. Where should I run mold? Should it be triggered on the CI server or should I run it locally?
+
+    It depends on your need. We would mainly run it from the CI server as part of the automated CI process. But nothing stops you from using it on the local machine if that fits in the need. 
