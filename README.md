@@ -147,7 +147,7 @@ The script can be found in [scripts/drclean](scripts/drclean).  Please read the 
 what it exactly does.
 
 ## FAQ
-###1. What is the difference between mold and Docker Compose? Why don't we use Docker Compose instead to test, build, package, and publish our applications?
+1. What is the difference between mold and Docker Compose? Why don't we use Docker Compose instead to test, build, package, and publish our applications?
 
     [Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. It does not seem like possible based on our experiment. Docker Compose controls the order of service startup but does not provide a way to manage when an image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
 
@@ -191,10 +191,10 @@ what it exactly does.
     composetest_build_img_1 exited with code 1
     ```
     
-###2. What are the system requirements to run mold? 
+2. What are the system requirements to run mold? 
 
     Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/releases). It however requires Docker installed on the system. That also means for the Windows system, it requires 64bit Windows 10 Pro, Enterprise and Education (1511 November update, Build 10586 or later) and Microsoft Hyper-V. Please see the details from the [Docker site](https://docs.docker.com/docker-for-windows/)
     
-###3. Where should I run mold? Should it be triggered on the CI server or should I run it locally?
+3. Where should I run mold? Should it be triggered on the CI server or should I run it locally?
 
     It depends on your need. We would mainly run it from the CI server as part of the automated CI process. But nothing stops you from using it on the local machine if that fits in the need. 
