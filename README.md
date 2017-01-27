@@ -177,4 +177,15 @@ what it exactly does.
     CMD ["/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
     ```
     The result however shows the dependency condition only affects the order of the service startup (as what Docker Compose is made for.)
-
+    ```
+    Building build_img
+    ...
+    Successfully built 2946ba878f8c
+    ...
+    Creating composetest_build_app_1
+    Creating composetest_build_img_1
+    ...
+    build_img_1  | /app/myApp does NOT exist
+    composetest_build_app_1 exited with code 0
+    composetest_build_img_1 exited with code 1
+    ```
