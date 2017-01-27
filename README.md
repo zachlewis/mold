@@ -177,7 +177,7 @@ what it exactly does.
     ADD . /app
     CMD ["/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
     ```
-    The result however shows the dependency condition only affects the order of the service startup (as what Docker Compose is made for.)
+    The result however shows the dependency condition only affects the order of the service startup:
     ```
     Building build_img
     ...
