@@ -192,4 +192,4 @@ what it exactly does.
     ```
 2. What are the system requirements to run mold? 
 
-    Mold is release for Linux, Mac, and Windows. It however requires Docker installed on the system. That also means for the Windows system, it would require 64bit Windows 10 Pro, Enterprise and Education (1511 November update, Build 10586 or later) and Microsoft Hyper-V. Please see the details from the [Docker site](https://docs.docker.com/docker-for-windows/)
+    Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/releases). It however requires Docker installed on the system. That also means for the Windows system, it would require 64bit Windows 10 Pro, Enterprise and Education (1511 November update, Build 10586 or later) and Microsoft Hyper-V. Please see the details from the [Docker site](https://docs.docker.com/docker-for-windows/)
