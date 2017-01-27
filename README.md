@@ -145,3 +145,36 @@ you would like to save.
 
 The script can be found in [scripts/drclean](scripts/drclean).  Please read the comments if you would like to know
 what it exactly does.
+
+## FAQ
+1. What is the difference between mold and Docker Compose? Why don't we use Docker Compose instead to test, build, package, and publish our applications?
+    [Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. It does not seem like possible based on our experiment. Docker Compose controls the order of service startup but does not provide a way to manage when a image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
+
+    Docker-compose.yml
+    ```
+    version: '2.1'
+    services:
+      build_img:
+        build: .
+        depends_on:
+          build_app:
+            condition: service_healthy
+      build_app:
+        image: alpine
+        volumes:
+          - ./:/app/
+        command: /bin/sh -ec "sleep 5s; head -c 10 /dev/urandom > /app/myApp"
+        healthcheck:
+            test: ["CMD", "/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+    ```
+    Dockerfile
+    ```
+    FROM alpine
+    ADD . /app
+    CMD ["/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
+    ```
+    The result however shows the dependency condition only affects the order of the service startup (as what Docker Compose is made for.)
+
