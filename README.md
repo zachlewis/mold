@@ -149,7 +149,7 @@ what it exactly does.
 ## FAQ
 1. What is the difference between mold and Docker Compose? Why don't we use Docker Compose instead to test, build, package, and publish our applications?
 
-    [Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. It does not seem like possible based on our experiment. Docker Compose controls the order of service startup but does not provide a way to manage when a image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
+    [Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. It does not seem like possible based on our experiment. Docker Compose controls the order of service startup but does not provide a way to manage when an image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
 
     Docker-compose.yml
     ```
