@@ -150,52 +150,55 @@ what it exactly does.
 
 ### 1. Why not use Docker Compose to test, build, package, and publish our applications?
 
-    [Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. It does not seem like possible based on our experiment. Docker Compose controls the order of service startup but does not provide a way to manage when an image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
+[Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. It does not seem like possible based on our experiment. Docker Compose controls the order of service startup but does not provide a way to manage when an image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
 
-    Docker-compose.yml
-    ```
-    version: '2.1'
-    services:
-      build_img:
-        build: .
-        depends_on:
-          build_app:
-            condition: service_healthy
+#### docker-compose.yml
+
+```
+version: '2.1'
+services:
+  build_img:
+    build: .
+    depends_on:
       build_app:
-        image: alpine
-        volumes:
-          - ./:/app/
-        command: /bin/sh -ec "sleep 5s; head -c 10 /dev/urandom > /app/myApp"
-        healthcheck:
-            test: ["CMD", "/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
-            interval: 30s
-            timeout: 10s
-            retries: 5
-    ```
-    Dockerfile
-    ```
-    FROM alpine
-    ADD . /app
-    CMD ["/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
-    ```
-    The result however shows the dependency condition only affects the order of the service startup:
-    ```
-    Building build_img
-    ...
-    Successfully built 2946ba878f8c
-    ...
-    Creating composetest_build_app_1
-    Creating composetest_build_img_1
-    ...
-    build_img_1  | /app/myApp does NOT exist
-    composetest_build_app_1 exited with code 0
-    composetest_build_img_1 exited with code 1
-    ```
+        condition: service_healthy
+  build_app:
+    image: alpine
+    volumes:
+      - ./:/app/
+    command: /bin/sh -ec "sleep 5s; head -c 10 /dev/urandom > /app/myApp"
+    healthcheck:
+        test: ["CMD", "/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+```
+#### Dockerfile
+```
+FROM alpine
+ADD . /app
+CMD ["/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
+```
+
+The result however shows the dependency condition only affects the order of the service startup:
+
+```
+Building build_img
+...
+Successfully built 2946ba878f8c
+...
+Creating composetest_build_app_1
+Creating composetest_build_img_1
+...
+build_img_1  | /app/myApp does NOT exist
+composetest_build_app_1 exited with code 0
+composetest_build_img_1 exited with code 1
+```
 
 ### 2. What are the system requirements to run mold?
 
-    Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/releases). It however requires Docker installed on the system. This also means for Windows system, it requires 64bit Windows 10 Pro, Enterprise and Education (1511 November update, Build 10586 or later) and Microsoft Hyper-V. Please see the details from the [Docker site](https://docs.docker.com/docker-for-windows/)
+Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/releases). It however requires Docker installed on the system. This also means for Windows system, it requires 64bit Windows 10 Pro, Enterprise and Education (1511 November update, Build 10586 or later) and Microsoft Hyper-V. Please see the details from the [Docker site](https://docs.docker.com/docker-for-windows/)
 
 ### 3. Where should I run mold? Should it be triggered on the CI server or should I run it locally?
 
-    You can run mold locally or incorporate it into your CI pipeline. 
+You can run mold locally or incorporate it into your CI pipeline.
