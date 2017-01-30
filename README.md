@@ -155,9 +155,11 @@ assembling needed images before running the application stack.  Mold is used man
 package and publish.
 
 One still may wonder if mold is really needed and if the same could be acheived via docker-compose. Based on our tests, it does
-seem viable to use docker-compose as a CI solution. Docker compose controls the order of service startup but does not provide a
-way to manage the order of image builds and services. Below shows the docker-compose file and the Dockerfile we used to mimic the
-build process and test if the dependency conditions would delay the image build from the Dockerfile until the application is built.
+seem viable to use docker-compose as a CI solution.
+
+Docker compose controls the order of service startup but does not provide way to manage the order of image builds. Below shows the
+docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency conditions would delay the
+image build from the Dockerfile until the application is built.
 
 #### docker-compose.yml
 
