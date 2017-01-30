@@ -150,7 +150,14 @@ what it exactly does.
 
 ### 1. Why not use Docker Compose to test, build, package, and publish our applications?
 
-[Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications while mold is to manage the CI steps. People may still wonder if Docker Compose could be used to achieve what mold does even though it is not originally made for the purpose. Based on our tests, it does not appear to be possible to use Docker Compose as a CI solution. Docker Compose controls the order of service startup but does not provide a way to manage when an image should be built. Below shows the docker-compose file and the Dockerfile we used to mimic the build process and test if the dependency condition would also delay the image build from the Dockerfile till the application is built.
+[Docker Compose](https://docs.docker.com/compose/overview/) is a tool to define and run multi-container applications, optionally
+assembling needed images before running the application stack.  Mold is used manage your CI pipeline in Docker i.e test, build,
+package and publish.
+
+One still may wonder if mold is really needed and if the same could be acheived via docker-compose. Based on our tests, it does
+seem viable to use docker-compose as a CI solution. Docker compose controls the order of service startup but does not provide a
+way to manage the order of image builds and services. Below shows the docker-compose file and the Dockerfile we used to mimic the
+build process and test if the dependency conditions would delay the image build from the Dockerfile until the application is built.
 
 #### docker-compose.yml
 
@@ -173,14 +180,16 @@ services:
         timeout: 10s
         retries: 5
 ```
+
 #### Dockerfile
+
 ```
 FROM alpine
 ADD . /app
 CMD ["/bin/sh", "-f", "/app/fileExist.sh", "/app/myApp"]
 ```
 
-The result however shows the dependency condition only affects the order of the service startup:
+The result below shows the dependency condition only affects the order of the service startup and not that of an image build:
 
 ```
 Building build_img
@@ -194,6 +203,9 @@ build_img_1  | /app/myApp does NOT exist
 composetest_build_app_1 exited with code 0
 composetest_build_img_1 exited with code 1
 ```
+
+Another aspect that mold handles is separating the build images from the deployment images i.e builds happen in 1 container
+and the resulting artifacts are then used to build the final image which will be published to a registry.
 
 ### 2. What are the system requirements to run mold?
 
