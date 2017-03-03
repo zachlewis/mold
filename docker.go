@@ -197,7 +197,11 @@ func (dkr *Docker) TailLogs(containerID string, wr io.Writer, prefix string) err
 		// Append the specified prefix
 		wr.Write([]byte(prefix + " "))
 		// Remove the date from the timestamp
-		wr.Write(append(append(b[19:32], ' '), b[39:]...))
+		if len(b) > 39 {
+			wr.Write(append(append(b[19:32], ' '), b[39:]...))
+		} else {
+			wr.Write(b)
+		}
 	}
 	return err
 }
@@ -208,7 +212,7 @@ func (dkr *Docker) RemoveContainer(containerID string, force bool) error {
 	return dkr.cli.ContainerRemove(context.Background(), containerID, options)
 }
 
-// BuildImage builds a docker images based on the config and writes the log out
+// BuildImageAsync builds a docker images based on the config and writes the log out
 // to the the specified Writer.  This is an async call.
 func (dkr *Docker) BuildImageAsync(ic *ImageConfig, logWriter io.Writer, prefix string, done chan bool) error {
 	bldCxt, err := tarDirectory(ic.Context, nil)
