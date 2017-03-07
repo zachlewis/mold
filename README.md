@@ -1,5 +1,10 @@
 # mold
-Test, Build, Package and Publish your application completely using docker.
+Mold is a tool to help test, build, package and publish your application completely within a containerized environment.
+It automates the process from installing dependencies and testing to packaging and publishing your image to a registry.
+
+Mold starts by creating an isolated network to run your build, followed by installing your dependencies, running
+unit tests and building any needed binaries in a container.  These binaries are in turn used to package the container
+image and publish to a registry.
 
 ## Installation
 [Download](https://github.com/d3sw/mold/releases) the binary based on your OS.  Once uncompressed copy it into your system PATH.
