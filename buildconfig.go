@@ -20,7 +20,7 @@ type BuildConfig struct {
 	// LastCommit for the branch
 	LastCommit string
 	// Context is the root of the build.  This defaults to the current working
-	// directory
+	// directory.
 	Context string
 	// Service i.e. containers needed to perform build
 	Services []DockerRunConfig
@@ -48,6 +48,14 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 	if bc.Context == "" || bc.Context == "." || bc.Context == "./" {
 		if bc.Context, err = os.Getwd(); err != nil {
 			return nil, err
+		}
+	}
+	// Account for windows unc paths
+	p1 := strings.Replace(bc.Context, `\`, "/", -1)
+	for i, c := range p1 {
+		if c == '/' {
+			bc.Context = p1[i:]
+			break
 		}
 	}
 

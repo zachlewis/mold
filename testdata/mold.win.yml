@@ -1,0 +1,61 @@
+# This gives the container access to the docker socket
+docker: true
+
+context: "C:\\foo\\bar"
+
+# Launch services needed for build
+services:
+    - image: elasticsearch
+    - image: progrium/consul
+      # Args pass to the container
+      commands:
+          - -server
+          - -bootstrap
+# Perform 1 or more builds.  This run a container with the specified parameters
+# and commands.
+build:
+    # Docker image to run commands on
+    - image: golang:1.7.3
+      # Working directory in the container. This is where your code repo is mounted
+      # and persists through out the lifecycle of the build.
+      workdir: /go/src/github.com/euforia/mold
+      environment:
+          - TEST_ENV=test_env
+      save: true
+      commands:
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - uptime
+    # Docker image to run commands on
+    - image: golang:1.2.1
+      # Working directory in the container
+      workdir: /go/src/github.com/euforia/mold
+      # Your customized build commands.
+      commands:
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+
+# Build docker images
+artifacts:
+    # Only publish the image on the following branches/tags. '*' can be used to
+    # publish on all branches/tags
+    publish:
+    # Default registry to use if not specified. Blank uses docker hub
+    registry: #test.docker.registry
+    images:
+        - name: euforia/mold-test
+          dockerfile: testdata/Dockerfile
+          registry:
+          #cache:
+# Send notifications
+notifications:
+    slack:
+        channel: "#test-channel"
