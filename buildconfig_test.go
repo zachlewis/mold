@@ -34,7 +34,7 @@ func Test_NewBuildConfig_windows(t *testing.T) {
 	}
 
 	if tbc.Context != "/foo/bar" {
-		t.Fatal("failied to convert windows path")
+		t.Fatal("failied to convert windows path", tbc.Context)
 	}
 }
 
