@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func Test_NewBuildConfig_windows(t *testing.T) {
+/*func Test_NewBuildConfig_windows(t *testing.T) {
 	b, err := ioutil.ReadFile(testBldfileWin)
 	if err != nil {
 		t.Fatalf("%s", err)
@@ -36,7 +36,7 @@ func Test_NewBuildConfig_windows(t *testing.T) {
 	if tbc.Context != "/foo/bar" {
 		t.Fatal("failied to convert windows path", tbc.Context)
 	}
-}
+}*/
 
 func Test_NewBuildConfig(t *testing.T) {
 	b, err := ioutil.ReadFile(testBldCfg)
