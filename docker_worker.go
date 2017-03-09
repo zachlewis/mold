@@ -277,6 +277,7 @@ func (bld *DockerWorker) Setup() error {
 	}
 
 	bld.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", bld.cfg.Name, bld.netID)))
+	// Start service containers
 	for i, cs := range bld.sc {
 		if err := bld.dkr.StartContainer(bld.sc[i].ContainerConfig, bld.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
 			return err

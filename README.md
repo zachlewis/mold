@@ -25,6 +25,13 @@ specify an alternate file you can use the `-f` flag followed by the path to your
 
 In most cases you will simply issue the `mold` command.
 
+## Windows Usage
+On windows, the following needs to be performed in order for mold to function properly
+
+1. Must specify `-uri tcp://127.0.0.1:2375` options.
+2. Set the home environment variable to `HOME=C:/Users/{username}`
+3. Make sure `$HOME/.docker/config.json` exists.  You can run `docker login` to create one or simply create any empty file.
+
 ## Configuration
 By default mold looks for a .mold.yml configuration file at the root of your project.
 This contains all the necessary information to perform your build.  A sample with comments
