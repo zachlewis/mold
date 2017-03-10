@@ -90,15 +90,16 @@ containers your build process needs to perform the build.  For example if you ar
 tests that require elasticsearch, you would declare a elasticsearch container to run
 in this section as shown in the above example.
 
-Service containers are spun up prior to the code build.  They are accessed via their image name
-from your build container.
+Service containers are spun up prior to the code build.  They are accessed via their image name followed
+by the project name.  In the above example if the project name is `foo` you can access the consul service
+using the host `consul.foo` in your build container.
 
 #### image
 The image name of the service to start.  A vast list of public images can be found on
 [Docker Hub](https://hub.docker.com).  Private images can also be specified.
 
 #### commands
-These are the arguments passed to the service container.
+These are a list of commands passed as arguments to the service container.
 
 ## Build
 Build contains a list of builds to perform. This is used to perform testing and/or building binaries.  
