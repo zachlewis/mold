@@ -72,3 +72,11 @@ func Test_LifeCycle_RunTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func Test_LifeCycle_Resolution(t *testing.T) {
+	bc, bld, _ := initializeBuild("./testdata/mold7.yml", *dockerURI)
+	lc := NewLifeCycle(bld)
+	if err := lc.Run(bc); err != nil {
+		t.Fatal(err)
+	}
+}
