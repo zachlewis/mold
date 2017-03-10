@@ -11,6 +11,7 @@ type DockerRunConfig struct {
 	Workdir     string   // Working directory in the container
 	Environment []string
 	Save        bool // do not remove container after completion
+	Shell       string
 }
 
 // BuildCmds returns the command string that is passed in to bash -cex on the

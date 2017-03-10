@@ -73,7 +73,7 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.WorkingDir = b.Workdir
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
-		cc.Container.Cmd = []string{"/bin/bash", "-cex", b.BuildCmds()}
+		cc.Container.Cmd = []string{b.Shell, "-cex", b.BuildCmds()}
 		cc.Container.Env = b.Environment
 		cc.Host.Mounts = []mount.Mount{
 			mount.Mount{Target: b.Workdir, Source: bc.Context, Type: mount.TypeBind},

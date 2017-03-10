@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"strings"
 	"testing"
 )
@@ -11,16 +10,9 @@ import (
 var (
 	testBldCfg     = "testdata/mold1.yml"
 	testBldfileWin = "testdata/mold.win.yml"
-	testBc         *BuildConfig
-	testBld        *DockerWorker
+	//testBc         *BuildConfig
+	//testBld        *DockerWorker
 )
-
-func TestMain(m *testing.M) {
-	testBld, _ = NewDockerWorker(nil)
-	code := m.Run()
-	testBld.Teardown()
-	os.Exit(code)
-}
 
 /*func Test_NewBuildConfig_windows(t *testing.T) {
 	b, err := ioutil.ReadFile(testBldfileWin)
@@ -44,15 +36,17 @@ func Test_NewBuildConfig(t *testing.T) {
 		t.Fatalf("%s", err)
 	}
 
-	if testBc, err = NewBuildConfig(b); err != nil {
+	testBc, err := NewBuildConfig(b)
+	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(testBc.LastCommit) == 0 {
 		t.Log("last commit should be set")
 		t.Fail()
 	}
 
-	if len(testBc.Name) == 0 {
+	if len(testBc.Name()) == 0 {
 		t.Log("name should be set")
 		t.Fail()
 	}
@@ -67,10 +61,10 @@ func Test_NewBuildConfig(t *testing.T) {
 		t.Error("context path not *nix")
 	}
 
-	testBc.Name += "-test1"
+	testBc.RepoName += "-test1"
 	b, _ = json.MarshalIndent(testBc, "", "  ")
-
 	t.Logf("%s\n", b)
+	t.Log(testBc.Name())
 
 	for _, v := range testBc.Artifacts.Images {
 		if v.Dockerfile == "" {
