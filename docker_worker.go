@@ -69,7 +69,7 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 	for i, s := range sc {
 		// Initialize state
 		cs := &containerState{ContainerConfig: s, Type: ServiceContainerType}
-		cs.Name = nameFromImageName(s.Container.Image)
+		cs.Name = nameFromImageName(s.Container.Image) + "." + cfg.RepoName
 		// Attach network
 		cs.Network = bld.defaultNetConfig()
 		bld.sc[i] = cs
@@ -85,7 +85,7 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 			save:            bld.cfg.Build[i].Save,
 		}
 		//cs.Name = fmt.Sprintf("%s-%d", bld.cfg.Name, i)
-		cs.Name = fmt.Sprintf("%s-%d-%d", bld.cfg.Name, i, time.Now().UnixNano())
+		cs.Name = fmt.Sprintf("%s-%d-%d", bld.cfg.Name(), i, time.Now().UnixNano())
 		cs.Network = bld.defaultNetConfig()
 		bld.bc[i] = cs
 	}
@@ -95,7 +95,7 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 func (bld *DockerWorker) defaultNetConfig() *network.NetworkingConfig {
 	return &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			bld.cfg.Name: &network.EndpointSettings{
+			bld.cfg.Name(): &network.EndpointSettings{
 				NetworkID: bld.netID,
 			},
 		},
@@ -272,11 +272,15 @@ func (bld *DockerWorker) Abort() error {
 // that are spun up.  If any error occurs the whole build will bail out
 func (bld *DockerWorker) Setup() error {
 	var err error
-	if bld.netID, err = bld.dkr.CreateNetwork(bld.cfg.Name); err != nil {
+	if bld.netID, err = bld.dkr.CreateNetwork(bld.cfg.Name()); err != nil {
+		//if !strings.Contains(err.Error(), "exists") {
+		//	return err
+		//}
 		return err
+		// network exists - so move on.
 	}
+	bld.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", bld.cfg.Name(), bld.netID)))
 
-	bld.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", bld.cfg.Name, bld.netID)))
 	// Start service containers
 	for i, cs := range bld.sc {
 		if err := bld.dkr.StartContainer(bld.sc[i].ContainerConfig, bld.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
@@ -300,7 +304,7 @@ func (bld *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 			if cs.Type == BuildContainerType && tailLog {
 				go func(prefix string) {
 					// wait otherwise docker may return a 404
-					<-time.After(1 * time.Second)
+					<-time.After(1000 * time.Millisecond)
 					if e := bld.dkr.TailLogs(cs.ID(), bld.log, prefix); e != nil {
 						log.Println("ERR Failed to tail log", e)
 					}

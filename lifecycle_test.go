@@ -6,10 +6,17 @@ import (
 )
 
 func Test_LifeCycle(t *testing.T) {
-	bc, _ := readBuildConfig("./testdata/mold1.yml")
-	bc.Name += "-test2"
+	bc, worker, err := initializeBuild("./testdata/mold3.yml", *dockerURI)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	lc := NewLifeCycle(testBld)
+	//bc, _ := readBuildConfig("./testdata/mold1.yml")
+	//bc.RepoName += "-test2"
+
+	//worker, _ := NewDockerWorker(nil)
+
+	lc := NewLifeCycle(worker)
 	if err := lc.Run(bc); err != nil {
 		t.Fatal(err)
 	}
@@ -19,9 +26,11 @@ func Test_LifeCycle(t *testing.T) {
 
 func Test_LifeCycle_fail(t *testing.T) {
 	bc, _ := readBuildConfig("./testdata/mold2.yml")
-	bc.Name += "-test3"
+	bc.RepoName += "-test3"
 
-	lc := NewLifeCycle(testBld)
+	worker, _ := NewDockerWorker(nil)
+
+	lc := NewLifeCycle(worker)
 	if err := lc.Run(bc); err == nil {
 		t.Fatal("should fail")
 	}
@@ -33,7 +42,7 @@ func Test_LifeCycle_Abort(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bc.Name += "-test4"
+	bc.RepoName += "-test4"
 
 	lc := NewLifeCycle(bld)
 	go func() {
@@ -51,7 +60,9 @@ func Test_LifeCycle_Abort(t *testing.T) {
 
 func Test_LifeCycle_RunTarget(t *testing.T) {
 	bc, bld, _ := initializeBuild("./testdata/mold1.yml", *dockerURI)
-	bc.Name += "-test5"
+
+	bc.RepoName += "-test5"
+
 	lc := NewLifeCycle(bld)
 	if err := lc.RunTarget(bc, "artifacts", "euforia/mold-test"); err != nil {
 		t.Fatal(err)
