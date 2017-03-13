@@ -56,8 +56,8 @@ func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
 	return
 }
 
-// Configure the job. This converts the BuildConfig to the docker required
-// datastructure
+// Configure the job. This converts the BuildConfig to the docker required datastructure normalizing
+// values as needed.
 func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 	bld.mu.Lock()
 	defer bld.mu.Unlock()
@@ -159,6 +159,7 @@ func (bld *DockerWorker) RemoveArtifacts() error {
 
 func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 	var auth *types.AuthConfig
+
 	if registry == "" {
 		auth = bld.authCfg.DockerHubAuth()
 	} else {
@@ -173,7 +174,7 @@ func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 		}
 	}
 
-	if auth.Auth != "" && auth.Username == "" {
+	if auth != nil && auth.Auth != "" && auth.Username == "" {
 		if s, err := base64.StdEncoding.DecodeString(auth.Auth); err == nil {
 			a := strings.Split(string(s), ":")
 			if len(a) == 2 {
@@ -182,6 +183,7 @@ func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 			}
 		}
 	}
+
 	return auth
 }
 
