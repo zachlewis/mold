@@ -284,7 +284,7 @@ func (dkr *Docker) RemoveImage(imageID string, force bool) error {
 
 // CreateNetwork creates a bridge network
 func (dkr *Docker) CreateNetwork(name string) (string, error) {
-	opts := types.NetworkCreate{Driver: "bridge", CheckDuplicate: true}
+	opts := types.NetworkCreate{Driver: "bridge", CheckDuplicate: false}
 	rsp, err := dkr.cli.NetworkCreate(context.Background(), name, opts)
 	if err != nil {
 		return "", err

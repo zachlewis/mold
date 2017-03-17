@@ -5,7 +5,16 @@ import (
 	"time"
 )
 
+/*func TestMain(m *testing.M) {
+	testBld, _ = NewDockerWorker(nil)
+	code := m.Run()
+	testBld.Teardown()
+	os.Exit(code)
+}*/
+
 func Test_Worker_Configure(t *testing.T) {
+	testBc, testBld, _ := initializeBuild("./testdata/mold1.yml", "")
+	//testBld, _ := NewDockerWorker(nil)
 	if err := testBld.Configure(testBc); err != nil {
 		t.Fatal(err)
 	}
@@ -25,6 +34,10 @@ func Test_Worker_Configure(t *testing.T) {
 }
 
 func Test_Worker_Build(t *testing.T) {
+	//testBld, _ := NewDockerWorker(nil)
+	testBc, testBld, _ := initializeBuild("./testdata/mold2.yml", "")
+	testBld.Configure(testBc)
+
 	if err := testBld.Setup(); err != nil {
 		t.Fatal(err)
 	}
@@ -45,6 +58,11 @@ func Test_Worker_Build(t *testing.T) {
 }
 
 func Test_Worker_GeneratesArtifacts(t *testing.T) {
+	//testBld, _ := NewDockerWorker(nil)
+	//testBld.Configure(testBc)
+	testBc, testBld, _ := initializeBuild("./testdata/mold1.yml", "")
+	testBld.Configure(testBc)
+
 	if err := testBld.GenerateArtifacts(); err != nil {
 		t.Fatal(err)
 	}

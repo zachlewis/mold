@@ -126,8 +126,9 @@ Name       : %s
 Branch/Tag : %s
 Repo       : %s
 
+Services   : %d
 Builds     : %d
 Artifacts  : %d
 
-`, c.Name, c.BranchTag, c.RepoURL, len(c.Build), len(c.Artifacts.Images))))
+`, c.Name(), c.BranchTag, c.RepoURL, len(c.Services), len(c.Build), len(c.Artifacts.Images))))
 }
