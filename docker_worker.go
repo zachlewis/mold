@@ -173,7 +173,7 @@ func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 		}
 	}
 
-	if auth.Auth != "" && auth.Username == "" {
+	if auth != nil && auth.Auth != "" && auth.Username == "" {
 		if s, err := base64.StdEncoding.DecodeString(auth.Auth); err == nil {
 			a := strings.Split(string(s), ":")
 			if len(a) == 2 {

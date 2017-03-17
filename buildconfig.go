@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -49,16 +48,6 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 	if bc.Context == "" || bc.Context == "." || bc.Context == "./" {
 		if bc.Context, err = os.Getwd(); err != nil {
 			return nil, err
-		}
-	}
-	// Account for windows unc paths
-	if runtime.GOOS == "windows" {
-		p1 := strings.Replace(bc.Context, `\`, "/", -1)
-		for i, c := range p1 {
-			if c == '/' {
-				bc.Context = p1[i:]
-				break
-			}
 		}
 	}
 
