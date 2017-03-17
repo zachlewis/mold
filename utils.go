@@ -1,17 +1,16 @@
 package main
 
 import (
-	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/pkg/archive"
 )
 
 const dockerSockFile = "/var/run/docker.sock"
@@ -75,8 +74,12 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
 		cc.Container.Cmd = []string{b.Shell, "-cex", b.BuildCmds()}
 		cc.Container.Env = b.Environment
+		src := bc.Context
+		if runtime.GOOS == "windows" {
+			src = toDockerWinPath(src)
+		}
 		cc.Host.Mounts = []mount.Mount{
-			mount.Mount{Target: b.Workdir, Source: bc.Context, Type: mount.TypeBind},
+			mount.Mount{Target: b.Workdir, Source: src, Type: mount.TypeBind},
 		}
 		bconts[i] = cc
 
@@ -109,57 +112,17 @@ func readBuildConfig(bldfile string) (*BuildConfig, error) {
 	return nil, err
 }
 
-// Tar a given directory and return the underlying reader
-func tarDirectory(dir string, wr io.ReadWriter) (io.Reader, error) {
-	// Use provided writer if supplied else create one
-	w := wr
-	if w == nil {
-		w = new(bytes.Buffer)
+func tarDirectory(srcPath string) (io.ReadCloser, error) {
+	var excludes []string
+	includes := []string{"."}
+
+	tarOpts := &archive.TarOptions{
+		ExcludePatterns: excludes,
+		IncludeFiles:    includes,
+		Compression:     archive.Uncompressed,
+		NoLchown:        true,
 	}
-
-	gw := gzip.NewWriter(w)
-	defer gw.Close()
-
-	tw := tar.NewWriter(gw)
-	defer tw.Close()
-
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		var link string
-		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			if link, err = os.Readlink(path); err != nil {
-				return err
-			}
-		}
-
-		header, err := tar.FileInfoHeader(info, link)
-		if err != nil {
-			return err
-		}
-
-		// write relative path
-		relPath := strings.TrimPrefix(path, dir)
-		header.Name = relPath
-		if err = tw.WriteHeader(header); err != nil {
-			return err
-		}
-
-		if !info.Mode().IsRegular() { //nothing more to do for non-regular
-			return nil
-		}
-
-		fh, err := os.Open(path)
-		if err == nil {
-			defer fh.Close()
-			_, err = io.Copy(tw, fh)
-		}
-		return err
-	})
-
-	return w, err
+	return archive.TarWithOptions(srcPath, tarOpts)
 }
 
 // parseTarget parses user supplied target to get the lifecycle phase and
@@ -178,6 +141,15 @@ func parseTarget(target string) (lcStep LifeCyclePhase, sub string) {
 		sub = strings.Join(pp[1:], "/")
 	}
 	return
+}
+
+func toDockerWinPath(p string) string {
+	p = strings.Replace(p, `\`, "/", -1)
+	if !strings.HasPrefix(p, "/") {
+		p = "//" + p
+	}
+	p = strings.Replace(p, ":", "", 1)
+	return p
 }
 
 func printUsage() {

@@ -215,11 +215,10 @@ func (dkr *Docker) RemoveContainer(containerID string, force bool) error {
 // BuildImageAsync builds a docker images based on the config and writes the log out
 // to the the specified Writer.  This is an async call.
 func (dkr *Docker) BuildImageAsync(ic *ImageConfig, logWriter io.Writer, prefix string, done chan bool) error {
-	bldCxt, err := tarDirectory(ic.Context, nil)
+	bldCxt, err := tarDirectory(ic.Context)
 	if err != nil {
 		return err
 	}
-
 	opts := types.ImageBuildOptions{
 		Dockerfile: ic.Dockerfile,
 		Tags:       []string{ic.Name},

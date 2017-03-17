@@ -53,16 +53,6 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 			return nil, err
 		}
 	}
-	// Account for windows unc paths
-	/*if runtime.GOOS == "windows" {
-		p1 := strings.Replace(bc.Context, `\`, "/", -1)
-		for i, c := range p1 {
-			if c == '/' {
-				bc.Context = p1[i:]
-				break
-			}
-		}
-	}*/
 
 	for i, v := range bc.Build {
 		if v.Shell == "" {
