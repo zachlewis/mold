@@ -11,8 +11,11 @@ const defaultBuildConfigName = ".mold.yml"
 
 // BuildConfig holds the complete build configuration
 type BuildConfig struct {
-	// Project name
-	Name string
+	// Build name.  This is the name with the branch and commit included and calculated internally.
+	//name string
+
+	// Name of the repo.  This is different from the above name in that it is just the name of the project
+	RepoName string
 	// Git url
 	RepoURL string
 	// Tag or branch to build
@@ -51,6 +54,12 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 		}
 	}
 
+	for i, v := range bc.Build {
+		if v.Shell == "" {
+			bc.Build[i].Shell = "/bin/sh"
+		}
+	}
+
 	// Set artifact defaults
 	for i, v := range bc.Artifacts.Images {
 		// set the context to the working dir if not supplied
@@ -66,26 +75,35 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 	if bc.RepoURL != "" {
 		if pp := strings.Split(bc.RepoURL, "/"); len(pp) > 1 {
 			if n := strings.TrimSuffix(pp[len(pp)-1], ".git"); n != "" {
-				bc.Name = n
+				//bc.name = n
+				bc.RepoName = n
 			}
 		}
 	}
 
 	// set unique name based on name, branch and commit
-	bc.Name += "-" + bc.BranchTag
+	//bc.name += "-" + bc.BranchTag
+	//if len(bc.LastCommit) > 7 {
+	//	bc.name += "-" + bc.LastCommit[:8]
+	//}
+	//log.Println(bc.name)
+	return &bc, err
+}
+
+func (bc *BuildConfig) Name() string {
 	if len(bc.LastCommit) > 7 {
-		bc.Name += "-" + bc.LastCommit[:8]
+		return bc.RepoName + "-" + bc.BranchTag + "-" + bc.LastCommit[:8]
 	}
 
-	return &bc, err
+	return bc.RepoName + "-" + bc.BranchTag
 }
 
 // check and set repo info and naming structure
 func (bc *BuildConfig) checkRepoInfo() {
 
 	name, bt, lc := getRepoInfo(bc.Context)
-	if len(bc.Name) == 0 && len(name) > 0 {
-		bc.Name = name
+	if len(bc.RepoName) == 0 && len(name) > 0 {
+		bc.RepoName = name
 	}
 	if len(bc.BranchTag) == 0 && len(bt) > 0 {
 		bc.BranchTag = bt

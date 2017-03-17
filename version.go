@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 // VERSION number
-const VERSION = "0.1.6"
+const VERSION = "0.2.0"
 
 var (
 	branch    string

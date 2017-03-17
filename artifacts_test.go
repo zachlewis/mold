@@ -7,7 +7,7 @@ func Test_Artifacts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bc.Name += "-test4"
+	bc.RepoName += "-test4"
 	if len(bc.Artifacts.Publish) < 1 {
 		t.Fatal("publish should be non-zero")
 	}
