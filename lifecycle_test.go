@@ -96,3 +96,11 @@ func Test_LifeCycle_Resolution(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func Test_LifeCycle_multi_artifact(t *testing.T) {
+	bc, bld, _ := initializeBuild("./testdata/mold.multi-art.yml", *dockerURI)
+	lc := NewLifeCycle(bld)
+	if err := lc.Run(bc); err != nil {
+		t.Fatal(err)
+	}
+}
