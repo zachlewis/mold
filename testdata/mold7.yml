@@ -5,11 +5,11 @@ services:
           - -server
           - -bootstrap
 
-
 build:
     - image: alpine
       workdir: /src
       commands:
           - apk update
           - apk add bind-tools
+          - dig consul.mold
           - dig consul.mold | grep -A1 ANSWER | grep consul.mold || exit 1

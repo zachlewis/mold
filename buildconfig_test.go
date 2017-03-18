@@ -10,25 +10,7 @@ import (
 var (
 	testBldCfg     = "testdata/mold1.yml"
 	testBldfileWin = "testdata/mold.win.yml"
-	//testBc         *BuildConfig
-	//testBld        *DockerWorker
 )
-
-/*func Test_NewBuildConfig_windows(t *testing.T) {
-	b, err := ioutil.ReadFile(testBldfileWin)
-	if err != nil {
-		t.Fatalf("%s", err)
-	}
-
-	tbc, err := NewBuildConfig(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if tbc.Context != "/foo/bar" {
-		t.Fatal("failied to convert windows path", tbc.Context)
-	}
-}*/
 
 func Test_NewBuildConfig(t *testing.T) {
 	b, err := ioutil.ReadFile(testBldCfg)
