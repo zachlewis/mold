@@ -89,6 +89,7 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 		cs.Network = bld.defaultNetConfig()
 		bld.bc[i] = cs
 	}
+
 	return nil
 }
 
@@ -228,6 +229,10 @@ func (bld *DockerWorker) Publish(names ...string) error {
 // build steps to run.  They are in the order as seen in teh config. If no index
 // is provided all builds are run
 func (bld *DockerWorker) Build() error {
+	if len(bld.bc) == 0 {
+		return nil
+	}
+
 	done, err := bld.StartBuildAsync(true)
 	if err != nil {
 		return err
@@ -297,6 +302,7 @@ func (bld *DockerWorker) Setup() error {
 func (bld *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
 	bld.done = make(chan bool)
+
 	go bld.watchBuild()
 
 	for i, cs := range bld.bc {

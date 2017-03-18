@@ -12,20 +12,9 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
-	//git "gopkg.in/src-d/go-git.v4"
 )
 
 const dockerSockFile = "/var/run/docker.sock"
-
-/*func parseGitInfo() error {
-	repo, err := git.PlainOpen(".")
-	if err != nil {
-		return err
-	}
-	log.Println(repo.)
-
-	return nil
-}*/
 
 // parse git info from .git/HEAD to get name, branch and commit info.  If not found
 // that item will be an empty string

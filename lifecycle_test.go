@@ -24,6 +24,20 @@ func Test_LifeCycle(t *testing.T) {
 	dw.RemoveArtifacts()
 }
 
+func Test_LifeCycle_buildless(t *testing.T) {
+	bc, worker, err := initializeBuild("./testdata/mold.buildless.yml", *dockerURI)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lc := NewLifeCycle(worker)
+	if err := lc.Run(bc); err != nil {
+		t.Fatal(err)
+	}
+	dw := lc.worker.(*DockerWorker)
+	dw.RemoveArtifacts()
+}
+
 func Test_LifeCycle_fail(t *testing.T) {
 	bc, _ := readBuildConfig("./testdata/mold.fail.yml")
 	bc.RepoName += "-test3"
