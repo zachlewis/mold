@@ -70,6 +70,8 @@ identical.  Multiple services and builds can be defined for each of these sectio
               - hostname
               - uname -a
               - make
+	  ports:
+	      - "8080:8080"
 
     # Build docker images
     artifacts:

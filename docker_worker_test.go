@@ -114,3 +114,14 @@ func Test_Worker_Publish_fail2(t *testing.T) {
 		t.Fatalf("should fail with image not found: %+v", bcfg.Artifacts.Images)
 	}
 }
+
+func TestBuildListenOnPort(t *testing.T) {
+	bcfg, bld, _ := initializeBuild("./testdata/mold8.yml", "")
+	if err := bld.Configure(bcfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := bld.GenerateArtifacts(); err != nil {
+		t.Fatal(err)
+	}
+
+}
