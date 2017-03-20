@@ -24,12 +24,28 @@ func Test_LifeCycle(t *testing.T) {
 	dw.RemoveArtifacts()
 }
 
+func Test_LifeCycle_buildless(t *testing.T) {
+	bc, worker, err := initializeBuild("./testdata/mold.buildless.yml", *dockerURI)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lc := NewLifeCycle(worker)
+	if err := lc.Run(bc); err != nil {
+		t.Fatal(err)
+	}
+	dw := lc.worker.(*DockerWorker)
+	dw.RemoveArtifacts()
+}
+
 func Test_LifeCycle_fail(t *testing.T) {
-	bc, _ := readBuildConfig("./testdata/mold2.yml")
+	bc, _ := readBuildConfig("./testdata/mold.fail.yml")
 	bc.RepoName += "-test3"
 
-	worker, _ := NewDockerWorker(nil)
-
+	worker, err := NewDockerWorker(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	lc := NewLifeCycle(worker)
 	if err := lc.Run(bc); err == nil {
 		t.Fatal("should fail")
@@ -75,6 +91,14 @@ func Test_LifeCycle_RunTarget(t *testing.T) {
 
 func Test_LifeCycle_Resolution(t *testing.T) {
 	bc, bld, _ := initializeBuild("./testdata/mold7.yml", *dockerURI)
+	lc := NewLifeCycle(bld)
+	if err := lc.Run(bc); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_LifeCycle_multi_artifact(t *testing.T) {
+	bc, bld, _ := initializeBuild("./testdata/mold.multi-art.yml", *dockerURI)
 	lc := NewLifeCycle(bld)
 	if err := lc.Run(bc); err != nil {
 		t.Fatal(err)

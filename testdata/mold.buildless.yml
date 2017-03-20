@@ -1,0 +1,6 @@
+
+# Test publish option
+artifacts:
+    images:
+        - name: test-buildless
+        - dockerfile: testdata/Dockerfile
