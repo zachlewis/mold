@@ -12,6 +12,7 @@ type DockerRunConfig struct {
 	Environment []string
 	Save        bool // do not remove container after completion
 	Shell       string
+	Ports       []string // a quoted list of port mappings
 }
 
 // BuildCmds returns the command string that is passed in to bash -cex on the

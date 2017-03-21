@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/go-connections/nat"
 )
 
 const dockerSockFile = "/var/run/docker.sock"
@@ -66,11 +67,19 @@ func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
 }
 
 // assembleBuildContainers assembles container configs from user provided build config
-func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
+func assembleBuildContainers(bc *BuildConfig) ([]*ContainerConfig, error) {
 	bconts := make([]*ContainerConfig, len(bc.Build))
 	for i, b := range bc.Build {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.WorkingDir = b.Workdir
+
+		exposedPorts, portBindings, err := nat.ParsePortSpecs(b.Ports)
+		if err != nil {
+			return nil, err
+		}
+		cc.Container.ExposedPorts = exposedPorts
+		cc.Host.PortBindings = portBindings
+
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
 		cc.Container.Cmd = []string{b.Shell, "-cex", b.BuildCmds()}
 		cc.Container.Env = b.Environment
@@ -90,7 +99,7 @@ func assembleBuildContainers(bc *BuildConfig) []*ContainerConfig {
 				mount.Mount{Target: dockerSockFile, Source: dockerSockFile, Type: mount.TypeBind})
 		}
 	}
-	return bconts
+	return bconts, nil
 }
 
 // Merges errors together

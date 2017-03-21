@@ -76,7 +76,10 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 	}
 	//time.Now().Format(time.RFC3339)
 	// Build build container configs
-	bc := assembleBuildContainers(cfg)
+	bc, err := assembleBuildContainers(cfg)
+	if err != nil {
+		return fmt.Errorf("Could not assemble build container: %v", err)
+	}
 	bld.bc = make([]*containerState, len(bc))
 	for i, s := range bc {
 		cs := &containerState{
