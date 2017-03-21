@@ -128,7 +128,7 @@ func tarDirectory(srcPath string) (io.ReadCloser, error) {
 	tarOpts := &archive.TarOptions{
 		ExcludePatterns: excludes,
 		IncludeFiles:    includes,
-		Compression:     archive.Uncompressed,
+		Compression:     archive.Gzip,
 		NoLchown:        true,
 	}
 	return archive.TarWithOptions(srcPath, tarOpts)
