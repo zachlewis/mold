@@ -31,6 +31,7 @@ On windows, the following needs to be performed in order for mold to function pr
 1. Must specify `-uri tcp://127.0.0.1:2375` options.
 2. Set the home environment variable to `HOME=C:/Users/{username}`
 3. Make sure `$HOME/.docker/config.json` exists.  You can run `docker login` to create one or simply create any empty file.
+4. Make sure C: is shared: Docker settings > Shared Drives > Select the local drives you want to be available to your containers
 
 ## Configuration
 By default mold looks for a .mold.yml configuration file at the root of your project.
