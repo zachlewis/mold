@@ -24,12 +24,12 @@ var errAborted = fmt.Errorf("aborted")
 type DockerWorker struct {
 	mu sync.Mutex
 
-	cfg   *BuildConfig    // overall buildconfig
-	sc    containerStates // service containers
-	bc    containerStates // build containers
-	netID string          // network id to connect all containers to
+	buildConfig   *BuildConfig    // overall buildconfig
+	serviceStates containerStates // service containers
+	buildStates   containerStates // build containers
+	netID         string          // network id to connect all containers to
 
-	dkr *Docker // docker helper client
+	docker *Docker // docker helper client
 
 	done    chan bool // when all builds are completed
 	abort   chan bool // cancelled channel
@@ -43,36 +43,36 @@ type DockerWorker struct {
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
 // based client is used.
 func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
-	d = &DockerWorker{dkr: dcli, log: os.Stdout, abort: make(chan bool, 1)}
+	d = &DockerWorker{docker: dcli, log: os.Stdout, abort: make(chan bool, 1)}
 	// set up registry auth. pushes will not happen if failed
 	if d.authCfg, err = readDockerAuthConfig(""); err != nil {
 		log.Println("WRN", err)
 		err = nil
 	}
 
-	if d.dkr == nil {
-		d.dkr, err = NewDocker("")
+	if d.docker == nil {
+		d.docker, err = NewDocker("")
 	}
 	return
 }
 
 // Configure the job. This converts the BuildConfig to the docker required datastructure normalizing
 // values as needed.
-func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
-	bld.mu.Lock()
-	defer bld.mu.Unlock()
-	bld.cfg = cfg
+func (dw *DockerWorker) Configure(cfg *BuildConfig) error {
+	dw.mu.Lock()
+	defer dw.mu.Unlock()
+	dw.buildConfig = cfg
 
 	// Build service container contfigs
 	sc := assembleServiceContainers(cfg)
-	bld.sc = make([]*containerState, len(sc))
+	dw.serviceStates = make([]*containerState, len(sc))
 	for i, s := range sc {
 		// Initialize state
 		cs := &containerState{ContainerConfig: s, Type: ServiceContainerType}
 		cs.Name = nameFromImageName(s.Container.Image) + "." + cfg.RepoName
 		// Attach network
-		cs.Network = bld.defaultNetConfig()
-		bld.sc[i] = cs
+		cs.Network = dw.defaultNetConfig()
+		dw.serviceStates[i] = cs
 	}
 	//time.Now().Format(time.RFC3339)
 	// Build build container configs
@@ -80,40 +80,39 @@ func (bld *DockerWorker) Configure(cfg *BuildConfig) error {
 	if err != nil {
 		return fmt.Errorf("Could not assemble build container: %v", err)
 	}
-	bld.bc = make([]*containerState, len(bc))
+	dw.buildStates = make([]*containerState, len(bc))
 	for i, s := range bc {
 		cs := &containerState{
 			ContainerConfig: s,
 			Type:            BuildContainerType,
-			save:            bld.cfg.Build[i].Save,
+			save:            dw.buildConfig.Build[i].Save,
 		}
-		//cs.Name = fmt.Sprintf("%s-%d", bld.cfg.Name, i)
-		cs.Name = fmt.Sprintf("%s-%d-%d", bld.cfg.Name(), i, time.Now().UnixNano())
-		cs.Network = bld.defaultNetConfig()
-		bld.bc[i] = cs
+		cs.Name = fmt.Sprintf("%s-%d-%d", dw.buildConfig.Name(), i, time.Now().UnixNano())
+		cs.Network = dw.defaultNetConfig()
+		dw.buildStates[i] = cs
 	}
 
 	return nil
 }
 
-func (bld *DockerWorker) defaultNetConfig() *network.NetworkingConfig {
+func (dw *DockerWorker) defaultNetConfig() *network.NetworkingConfig {
 	return &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			bld.cfg.Name(): &network.EndpointSettings{
-				NetworkID: bld.netID,
+			dw.buildConfig.Name(): &network.EndpointSettings{
+				NetworkID: dw.netID,
 			},
 		},
 	}
 }
 
 // GenerateArtifacts builds docker images
-func (bld *DockerWorker) GenerateArtifacts(names ...string) error {
+func (dw *DockerWorker) GenerateArtifacts(names ...string) error {
 	var ics []ImageConfig
 	if len(names) == 0 {
-		ics = bld.cfg.Artifacts.Images
+		ics = dw.buildConfig.Artifacts.Images
 	} else {
 		for _, name := range names {
-			a := bld.cfg.Artifacts.GetImage(name)
+			a := dw.buildConfig.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
 			}
@@ -122,52 +121,52 @@ func (bld *DockerWorker) GenerateArtifacts(names ...string) error {
 	}
 	var err error
 	for _, ic := range ics {
-		if bld.aborted {
+		if dw.aborted {
 			return errAborted
 		}
-		bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", ic.Name)))
-		err = mergeErrors(err, bld.generateArtifact(&ic))
-		bld.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", ic.Name)))
+		dw.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", ic.Name)))
+		err = mergeErrors(err, dw.generateArtifact(&ic))
+		dw.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", ic.Name)))
 	}
 	return err
 }
 
-func (bld *DockerWorker) generateArtifact(ic *ImageConfig) error {
-	bld.done = make(chan bool)
-	err := bld.dkr.BuildImageAsync(ic, bld.log, fmt.Sprintf("[artifacts/%s]", ic.Name), bld.done)
+func (dw *DockerWorker) generateArtifact(ic *ImageConfig) error {
+	dw.done = make(chan bool)
+	err := dw.docker.BuildImageAsync(ic, dw.log, fmt.Sprintf("[artifacts/%s]", ic.Name), dw.done)
 	if err != nil {
 		return err
 	}
 	select {
-	case ok := <-bld.done:
+	case ok := <-dw.done:
 		if ok {
-			bld.log.Write([]byte("[artifacts] Completing...\n"))
+			dw.log.Write([]byte("[artifacts] Completing...\n"))
 		} else {
-			bld.log.Write([]byte("[artifacts] Completing with error(s)...\n"))
+			dw.log.Write([]byte("[artifacts] Completing with error(s)...\n"))
 		}
-	case <-bld.abort:
-		bld.RemoveArtifacts()
-		bld.log.Write([]byte("[artifacts] Aborting...\n"))
+	case <-dw.abort:
+		dw.RemoveArtifacts()
+		dw.log.Write([]byte("[artifacts] Aborting...\n"))
 	}
 	return err
 }
 
 // RemoveArtifacts removes all local artifacts it as definted in the config
-func (bld *DockerWorker) RemoveArtifacts() error {
+func (dw *DockerWorker) RemoveArtifacts() error {
 	var err error
-	for _, a := range bld.cfg.Artifacts.Images {
-		err = mergeErrors(err, bld.dkr.RemoveImage(a.Name, true))
+	for _, a := range dw.buildConfig.Artifacts.Images {
+		err = mergeErrors(err, dw.docker.RemoveImage(a.Name, true))
 	}
 	return err
 }
 
-func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
+func (dw *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 	var auth *types.AuthConfig
 
 	if registry == "" {
-		auth = bld.authCfg.DockerHubAuth()
+		auth = dw.authCfg.DockerHubAuth()
 	} else {
-		for rh, av := range bld.authCfg.Auths {
+		for rh, av := range dw.authCfg.Auths {
 			if strings.HasSuffix(rh, registry) {
 				auth = &av
 				if auth.ServerAddress == "" {
@@ -192,35 +191,35 @@ func (bld *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 }
 
 // Publish the artifact/s based on the config
-func (bld *DockerWorker) Publish(names ...string) error {
-	if bld.authCfg == nil || len(bld.authCfg.Auths) == 0 {
-		//bld.log.Write([]byte("[publish] Not publishing.  registry auth not specified\n"))
+func (dw *DockerWorker) Publish(names ...string) error {
+	if dw.authCfg == nil || len(dw.authCfg.Auths) == 0 {
+		//dw.log.Write([]byte("[publish] Not publishing.  registry auth not specified\n"))
 		return fmt.Errorf("registry auth not specified")
 	}
 
 	if len(names) == 0 {
-		for _, v := range bld.cfg.Artifacts.Images {
-			if bld.aborted {
+		for _, v := range dw.buildConfig.Artifacts.Images {
+			if dw.aborted {
 				return errAborted
 			}
-			auth := bld.getRegistryAuth(v.Registry)
-			if err := bld.dkr.PushImage(v.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", v.Name)); err != nil {
+			auth := dw.getRegistryAuth(v.Registry)
+			if err := dw.docker.PushImage(v.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", v.Name)); err != nil {
 				return err
 			}
 		}
 	} else {
 		for _, name := range names {
-			if bld.aborted {
+			if dw.aborted {
 				return errAborted
 			}
 
-			a := bld.cfg.Artifacts.GetImage(name)
+			a := dw.buildConfig.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
 			}
 
-			auth := bld.getRegistryAuth(a.Registry)
-			if err := bld.dkr.PushImage(a.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", name)); err != nil {
+			auth := dw.getRegistryAuth(a.Registry)
+			if err := dw.docker.PushImage(a.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", name)); err != nil {
 				return err
 			}
 		}
@@ -231,156 +230,153 @@ func (bld *DockerWorker) Publish(names ...string) error {
 // Build starts the build.  This is a blocking call. index defines one or more
 // build steps to run.  They are in the order as seen in teh config. If no index
 // is provided all builds are run
-func (bld *DockerWorker) Build() error {
-	if len(bld.bc) == 0 {
+func (dw *DockerWorker) Build() error {
+	if len(dw.buildStates) == 0 {
 		return nil
 	}
 
-	done, err := bld.StartBuildAsync(true)
+	done, err := dw.StartBuildAsync(true)
 	if err != nil {
 		return err
 	}
 
 	select {
 	case <-done:
-		for _, b := range bld.bc {
+		for _, b := range dw.buildStates {
 			if b.status != "success" {
 				err = mergeErrors(err, fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image))
 			}
 		}
 
-	case <-bld.abort:
-		bld.log.Write([]byte("[build] Aborting...\n"))
-		if e := bld.stopBuildContainer(); e != nil {
-			bld.log.Write([]byte("ERR Stopping build containers:" + e.Error() + "\n"))
+	case <-dw.abort:
+		dw.log.Write([]byte("[build] Aborting...\n"))
+		if e := dw.stopBuildContainer(); e != nil {
+			dw.log.Write([]byte("ERR Stopping build containers:" + e.Error() + "\n"))
 		}
 	}
 
 	return err
 }
 
-func (bld *DockerWorker) stopBuildContainer() error {
+func (dw *DockerWorker) stopBuildContainer() error {
 	var err error
-	for _, bc := range bld.bc {
-		bld.log.Write([]byte("[build] Stopping container: " + bc.ID() + "\n"))
-		err = mergeErrors(err, bld.dkr.StopContainer(bc.ID(), time.Duration(defaultStopTimeout)*time.Second))
+	for _, bc := range dw.buildStates {
+		dw.log.Write([]byte("[build] Stopping container: " + bc.ID() + "\n"))
+		err = mergeErrors(err, dw.docker.StopContainer(bc.ID(), time.Duration(defaultStopTimeout)*time.Second))
 	}
 	return err
 }
 
 // Abort cancels a running build
-func (bld *DockerWorker) Abort() error {
-	bld.mu.Lock()
-	bld.aborted = true
-	bld.mu.Unlock()
+func (dw *DockerWorker) Abort() error {
+	dw.mu.Lock()
+	dw.aborted = true
+	dw.mu.Unlock()
 
-	bld.abort <- true
+	dw.abort <- true
 	return nil
 }
 
 // Setup sets up services needed to perform the build.  These are additional containers
 // that are spun up.  If any error occurs the whole build will bail out
-func (bld *DockerWorker) Setup() error {
+func (dw *DockerWorker) Setup() error {
 	var err error
-	if bld.netID, err = bld.dkr.CreateNetwork(bld.cfg.Name()); err != nil {
-		//if !strings.Contains(err.Error(), "exists") {
-		//	return err
-		//}
+	if dw.netID, err = dw.docker.CreateNetwork(dw.buildConfig.Name()); err != nil {
 		return err
 		// network exists - so move on.
 	}
-	bld.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", bld.cfg.Name(), bld.netID)))
+	dw.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", dw.buildConfig.Name(), dw.netID)))
 
 	// Start service containers
-	for i, cs := range bld.sc {
-		if err := bld.dkr.StartContainer(bld.sc[i].ContainerConfig, bld.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
+	for i, cs := range dw.serviceStates {
+		if err := dw.docker.StartContainer(dw.serviceStates[i].ContainerConfig, dw.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
 			return err
 		}
-		bld.log.Write([]byte(fmt.Sprintf("[setup/service/%s] Started %s\n", cs.Name, cs.Container.Image)))
+		dw.log.Write([]byte(fmt.Sprintf("[setup/service/%s] Started %s\n", cs.Name, cs.Container.Image)))
 	}
 	return nil
 }
 
 // StartBuildAsync starts the build container/s
-func (bld *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
+func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
-	bld.done = make(chan bool)
+	dw.done = make(chan bool)
 
-	go bld.watchBuild()
+	go dw.watchBuild()
 
-	for i, cs := range bld.bc {
-		err := bld.dkr.StartContainer(bld.bc[i].ContainerConfig, bld.log, "")
+	for i, cs := range dw.buildStates {
+		err := dw.docker.StartContainer(dw.buildStates[i].ContainerConfig, dw.log, "")
 		if err == nil {
 			os.Stdout.Write([]byte(fmt.Sprintf("[build/%s] Started %s\n", cs.Name, cs.Container.Image)))
 			if cs.Type == BuildContainerType && tailLog {
 				go func(prefix string) {
 					// wait otherwise docker may return a 404
 					<-time.After(1000 * time.Millisecond)
-					if e := bld.dkr.TailLogs(cs.ID(), bld.log, prefix); e != nil {
+					if e := dw.docker.TailLogs(cs.ID(), dw.log, prefix); e != nil {
 						log.Println("ERR Failed to tail log", e)
 					}
 				}(fmt.Sprintf("[build/%s]", cs.Name))
 			}
 			continue
 		}
-		return bld.done, err
+		return dw.done, err
 	}
 
-	return bld.done, nil
+	return dw.done, nil
 }
 
 // Teardown stops and removes all services spun up before the build as part of cleanup
-func (bld *DockerWorker) Teardown() error {
+func (dw *DockerWorker) Teardown() error {
 	var err error
 	// remove service containers
-	for _, cs := range bld.sc {
-		e := bld.dkr.RemoveContainer(cs.ID(), true)
+	for _, cs := range dw.serviceStates {
+		e := dw.docker.RemoveContainer(cs.ID(), true)
 		err = mergeErrors(err, e)
 	}
 	// remove build containers.
-	for _, cs := range bld.bc {
+	for _, cs := range dw.buildStates {
 		if !cs.save {
-			e := bld.dkr.RemoveContainer(cs.ID(), true)
+			e := dw.docker.RemoveContainer(cs.ID(), true)
 			err = mergeErrors(err, e)
 		}
 	}
 
-	err = mergeErrors(err, bld.dkr.RemoveNetwork(bld.netID))
+	err = mergeErrors(err, dw.docker.RemoveNetwork(dw.netID))
 	return err
 }
 
 // TODO: add locking???
 // markContainerDone marks the container as done.  Return if all the build containers have completed
-func (bld *DockerWorker) markContainerDone(id, status string, state *types.ContainerState) bool {
-	for i, v := range bld.bc {
+func (dw *DockerWorker) markContainerDone(id, status string, state *types.ContainerState) bool {
+	for i, v := range dw.buildStates {
 		if v.ID() == id {
-			bld.mu.Lock()
-			bld.bc[i].done = true
+			dw.mu.Lock()
+			dw.buildStates[i].done = true
 
 			if len(status) > 0 {
-				bld.bc[i].status = status
+				dw.buildStates[i].status = status
 			}
 			if state != nil {
-				bld.bc[i].state = state
+				dw.buildStates[i].state = state
 			} else {
-				bld.bc[i].state = &types.ContainerState{Running: false}
+				dw.buildStates[i].state = &types.ContainerState{Running: false}
 			}
-			bld.mu.Unlock()
-			bld.log.Write([]byte(fmt.Sprintf("[build/%s] DONE\n", v.Name)))
+			dw.mu.Unlock()
+			dw.log.Write([]byte(fmt.Sprintf("[build/%s] DONE\n", v.Name)))
 		}
 	}
 	// check if all builds are done
-	for _, v := range bld.bc {
+	for _, v := range dw.buildStates {
 		if !v.done {
 			return false
 		}
 	}
-	bld.done <- true
+	dw.done <- true
 	return true
 }
 
-func (bld *DockerWorker) watchBuild() {
-	cli := bld.dkr.Client()
+func (dw *DockerWorker) watchBuild() {
+	cli := dw.docker.Client()
 	msgCh, errCh := cli.Events(context.Background(), types.EventsOptions{})
 	for {
 		select {
@@ -389,17 +385,17 @@ func (bld *DockerWorker) watchBuild() {
 			switch msg.Action {
 			case "destroy":
 				// Check if we are interested in this container
-				if c := bld.bc.Get(msg.Actor.ID); c != nil {
+				if c := dw.buildStates.Get(msg.Actor.ID); c != nil {
 					// Breakout if the whole build is done.  This does not update the status
 					// and is there more so the build doesn't block forever in case of failures
-					if bld.markContainerDone(msg.Actor.ID, "", nil) {
+					if dw.markContainerDone(msg.Actor.ID, "", nil) {
 						return
 					}
 				}
 
 			case "die", "kill", "stop":
 				// Check if we are interested in this container
-				if c := bld.bc.Get(msg.Actor.ID); c != nil {
+				if c := dw.buildStates.Get(msg.Actor.ID); c != nil {
 					var (
 						status string
 						state  types.ContainerState
@@ -415,7 +411,7 @@ func (bld *DockerWorker) watchBuild() {
 						status = msg.Action
 					}
 					// breakout if the whole build is done
-					if bld.markContainerDone(msg.Actor.ID, status, &state) {
+					if dw.markContainerDone(msg.Actor.ID, status, &state) {
 						return
 					}
 				}

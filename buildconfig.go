@@ -75,18 +75,11 @@ func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
 	if bc.RepoURL != "" {
 		if pp := strings.Split(bc.RepoURL, "/"); len(pp) > 1 {
 			if n := strings.TrimSuffix(pp[len(pp)-1], ".git"); n != "" {
-				//bc.name = n
 				bc.RepoName = n
 			}
 		}
 	}
 
-	// set unique name based on name, branch and commit
-	//bc.name += "-" + bc.BranchTag
-	//if len(bc.LastCommit) > 7 {
-	//	bc.name += "-" + bc.LastCommit[:8]
-	//}
-	//log.Println(bc.name)
 	return &bc, err
 }
 
