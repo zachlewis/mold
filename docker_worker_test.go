@@ -18,14 +18,14 @@ func Test_Worker_Configure(t *testing.T) {
 	if err := testBld.Configure(testBc); err != nil {
 		t.Fatal(err)
 	}
-	if len(testBld.sc) != len(testBc.Services) {
-		t.Fatalf("service mismatch have=%d want=%d", len(testBld.sc), len(testBc.Services)-1)
+	if len(testBld.serviceStates) != len(testBc.Services) {
+		t.Fatalf("service mismatch have=%d want=%d", len(testBld.serviceStates), len(testBc.Services)-1)
 		t.FailNow()
 	}
-	if len(testBld.bc) != len(testBc.Build) {
+	if len(testBld.buildStates) != len(testBc.Build) {
 		t.Fatal("service mismatch")
 	}
-	for _, s := range testBld.sc {
+	for _, s := range testBld.serviceStates {
 		if s.Name == "" {
 			t.Fatal("name empty for container", s.Container.Image)
 		}
@@ -52,7 +52,7 @@ func Test_Worker_Build(t *testing.T) {
 		t.Fail()
 	}
 
-	for _, v := range testBld.bc {
+	for _, v := range testBld.buildStates {
 		t.Log(v.Name, v.Status())
 	}
 }

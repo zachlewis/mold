@@ -11,11 +11,6 @@ func Test_LifeCycle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	//bc, _ := readBuildConfig("./testdata/mold1.yml")
-	//bc.RepoName += "-test2"
-
-	//worker, _ := NewDockerWorker(nil)
-
 	lc := NewLifeCycle(worker)
 	if err := lc.Run(bc); err != nil {
 		t.Fatal(err)
