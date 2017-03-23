@@ -9,8 +9,8 @@ import (
 
 const defaultBuildConfigName = ".mold.yml"
 
-// BuildConfig holds the complete build configuration
-type BuildConfig struct {
+// MoldConfig holds the complete build configuration
+type MoldConfig struct {
 	// Build name.  This is the name with the branch and commit included and calculated internally.
 	//name string
 
@@ -39,86 +39,87 @@ type BuildConfig struct {
 	Variables map[string]string
 }
 
-// NewBuildConfig creates a new config from yaml formatted bytes
-func NewBuildConfig(fileBytes []byte) (*BuildConfig, error) {
-	var bc BuildConfig
-	err := yaml.Unmarshal(fileBytes, &bc)
+// NewMoldConfig creates a new config from yaml formatted bytes
+func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
+	var mc MoldConfig
+	err := yaml.Unmarshal(fileBytes, &mc)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set current working directory if not specified
-	if bc.Context == "" || bc.Context == "." || bc.Context == "./" {
-		if bc.Context, err = os.Getwd(); err != nil {
+	if mc.Context == "" || mc.Context == "." || mc.Context == "./" {
+		if mc.Context, err = os.Getwd(); err != nil {
 			return nil, err
 		}
 	}
 
-	for i, v := range bc.Build {
+	for i, v := range mc.Build {
 		if v.Shell == "" {
-			bc.Build[i].Shell = "/bin/sh"
+			mc.Build[i].Shell = "/bin/sh"
 		}
 	}
 
 	// Set artifact defaults
-	for i, v := range bc.Artifacts.Images {
+	for i, v := range mc.Artifacts.Images {
 		// set the context to the working dir if not supplied
 		if len(v.Context) == 0 {
-			bc.Artifacts.Images[i].Context = bc.Context
+			mc.Artifacts.Images[i].Context = mc.Context
 		}
 	}
-	bc.Artifacts.setDefaults()
-	bc.checkRepoInfo()
-	bc.readEnvVars()
+	mc.Artifacts.setDefaults()
+	mc.checkRepoInfo()
+	mc.readEnvVars()
 
 	// try to set the name based on the repo url.
-	if bc.RepoURL != "" {
-		if pp := strings.Split(bc.RepoURL, "/"); len(pp) > 1 {
+	if mc.RepoURL != "" {
+		if pp := strings.Split(mc.RepoURL, "/"); len(pp) > 1 {
 			if n := strings.TrimSuffix(pp[len(pp)-1], ".git"); n != "" {
-				bc.RepoName = n
+				mc.RepoName = n
 			}
 		}
 	}
 
-	return &bc, err
+	return &mc, err
 }
 
-func (bc *BuildConfig) Name() string {
-	if len(bc.LastCommit) > 7 {
-		return bc.RepoName + "-" + bc.BranchTag + "-" + bc.LastCommit[:8]
+// Name returns the name of the build image to create
+func (mc *MoldConfig) Name() string {
+	if len(mc.LastCommit) > 7 {
+		return mc.RepoName + "-" + mc.BranchTag + "-" + mc.LastCommit[:8]
 	}
 
-	return bc.RepoName + "-" + bc.BranchTag
+	return mc.RepoName + "-" + mc.BranchTag
 }
 
 // check and set repo info and naming structure
-func (bc *BuildConfig) checkRepoInfo() {
+func (mc *MoldConfig) checkRepoInfo() {
 
-	name, bt, lc := getRepoInfo(bc.Context)
-	if len(bc.RepoName) == 0 && len(name) > 0 {
-		bc.RepoName = name
+	name, bt, lc := getRepoInfo(mc.Context)
+	if len(mc.RepoName) == 0 && len(name) > 0 {
+		mc.RepoName = name
 	}
-	if len(bc.BranchTag) == 0 && len(bt) > 0 {
-		bc.BranchTag = bt
+	if len(mc.BranchTag) == 0 && len(bt) > 0 {
+		mc.BranchTag = bt
 	}
-	if len(bc.LastCommit) == 0 && len(lc) > 0 {
-		bc.LastCommit = lc
+	if len(mc.LastCommit) == 0 && len(lc) > 0 {
+		mc.LastCommit = lc
 	}
 }
 
 // read env vars and config.  These take precedence over all configs overriding
 // anything prior
-func (bc *BuildConfig) readEnvVars() {
+func (mc *MoldConfig) readEnvVars() {
 	if cmt := os.Getenv("GIT_COMMIT"); len(cmt) > 7 {
-		bc.LastCommit = cmt[:8]
+		mc.LastCommit = cmt[:8]
 	}
 	if rurl := os.Getenv("GIT_URL"); len(rurl) > 0 {
-		bc.RepoURL = rurl
+		mc.RepoURL = rurl
 	}
 	if branchTag := os.Getenv("GIT_BRANCH"); len(branchTag) > 0 {
 		pp := strings.Split(branchTag, "/")
 		if len(pp) > 0 {
-			bc.BranchTag = pp[len(pp)-1]
+			mc.BranchTag = pp[len(pp)-1]
 		}
 	}
 }

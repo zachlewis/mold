@@ -22,7 +22,7 @@ const (
 // Worker perform all work for a given job.  This would be implemented
 // based on the backend used - in the current case docker.
 type Worker interface {
-	Configure(*BuildConfig) error      // Initialize underlying needed structs
+	Configure(*MoldConfig) error       // Initialize underlying needed structs
 	Setup() error                      // Statisfy deps needed for the build
 	Build() error                      // Build required data to be package
 	GenerateArtifacts(...string) error // Package data to an artifact.
@@ -34,7 +34,7 @@ type Worker interface {
 // LifeCycle manages the complete lifecyle
 type LifeCycle struct {
 	worker Worker
-	cfg    *BuildConfig
+	cfg    *MoldConfig
 	log    io.Writer
 }
 
@@ -44,7 +44,7 @@ func NewLifeCycle(worker Worker) *LifeCycle {
 }
 
 // Run the complete lifecyle
-func (lc *LifeCycle) Run(cfg *BuildConfig) error {
+func (lc *LifeCycle) Run(cfg *MoldConfig) error {
 
 	err := lc.worker.Configure(cfg)
 	if err != nil {
@@ -89,7 +89,7 @@ func (lc *LifeCycle) Abort() error {
 }
 
 // RunTarget runs a specified target in the lifecyle
-func (lc *LifeCycle) RunTarget(cfg *BuildConfig, target LifeCyclePhase, args ...string) error {
+func (lc *LifeCycle) RunTarget(cfg *MoldConfig, target LifeCyclePhase, args ...string) error {
 	var err error
 	switch target {
 	case lifeCycleBuild:

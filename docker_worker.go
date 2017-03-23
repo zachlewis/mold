@@ -24,7 +24,7 @@ var errAborted = fmt.Errorf("aborted")
 type DockerWorker struct {
 	mu sync.Mutex
 
-	buildConfig   *BuildConfig    // overall buildconfig
+	buildConfig   *MoldConfig     // overall moldconfig
 	serviceStates containerStates // service containers
 	buildStates   containerStates // build containers
 	netID         string          // network id to connect all containers to
@@ -56,9 +56,9 @@ func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
 	return
 }
 
-// Configure the job. This converts the BuildConfig to the docker required datastructure normalizing
+// Configure the job. This converts the MoldConfig to the docker required datastructure normalizing
 // values as needed.
-func (dw *DockerWorker) Configure(cfg *BuildConfig) error {
+func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 	dw.mu.Lock()
 	defer dw.mu.Unlock()
 	dw.buildConfig = cfg

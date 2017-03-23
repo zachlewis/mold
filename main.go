@@ -24,25 +24,25 @@ func init() {
 	//log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-func initializeBuild(bldfile, uri string) (*BuildConfig, *DockerWorker, error) {
-	buildCfg, err := readBuildConfig(bldfile)
+func initializeBuild(moldFile, uri string) (*MoldConfig, *DockerWorker, error) {
+	moldConfig, err := readMoldConfig(moldFile)
 	if err == nil {
 		var dcli *Docker
 		if dcli, err = NewDocker(uri); err == nil {
-			var bldr *DockerWorker
-			if bldr, err = NewDockerWorker(dcli); err == nil {
-				return buildCfg, bldr, nil
+			var dw *DockerWorker
+			if dw, err = NewDockerWorker(dcli); err == nil {
+				return moldConfig, dw, nil
 			}
 		}
 	}
 	return nil, nil, err
 }
 
-func getVar(key, bldfile string) (string, error) {
-	buildCfg, err := readBuildConfig(bldfile)
+func getVar(key, moldFile string) (string, error) {
+	moldConfig, err := readMoldConfig(moldFile)
 	if err == nil {
-		if len(buildCfg.Variables) > 0 {
-			if val, ok := buildCfg.Variables[key]; ok {
+		if len(moldConfig.Variables) > 0 {
+			if val, ok := moldConfig.Variables[key]; ok {
 				return val, nil
 			}
 		}
@@ -66,12 +66,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	buildCfg, bldr, err := initializeBuild(*buildFile, *dockerURI)
+	moldConfig, worker, err := initializeBuild(*buildFile, *dockerURI)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	lc := NewLifeCycle(bldr)
+	lc := NewLifeCycle(worker)
 	// Listen for signals for a clean shutdown
 	go func() {
 		sigs := make(chan os.Signal, 1)
@@ -85,12 +85,12 @@ func main() {
 	target, targetArg := parseTarget(*buildTarget)
 	switch target {
 	case "":
-		err = lc.Run(buildCfg)
+		err = lc.Run(moldConfig)
 	default:
 		if targetArg == "" {
-			err = lc.RunTarget(buildCfg, target)
+			err = lc.RunTarget(moldConfig, target)
 		} else {
-			err = lc.RunTarget(buildCfg, target, targetArg)
+			err = lc.RunTarget(moldConfig, target, targetArg)
 		}
 	}
 

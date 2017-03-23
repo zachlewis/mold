@@ -23,13 +23,6 @@ func Test_Docker(t *testing.T) {
 	}
 }
 
-/*func Test_Docker_PushImage(t *testing.T) {
-	d, _ := NewDocker("")
-	if err := d.PushImage("euforia/mold:latest", os.Stdout); err != nil {
-		t.Fatal(err)
-	}
-}*/
-
 func Test_Docker_PullImage(t *testing.T) {
 	d, _ := NewDocker("")
 	if err := d.PullImage("busybox:latest", os.Stdout, ""); err != nil {

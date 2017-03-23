@@ -55,9 +55,9 @@ func nameFromImageName(imageName string) string {
 	return iparts[len(iparts)-1]
 }
 
-func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
-	bcs := make([]*ContainerConfig, len(bc.Services))
-	for i, b := range bc.Services {
+func assembleServiceContainers(mc *MoldConfig) []*ContainerConfig {
+	bcs := make([]*ContainerConfig, len(mc.Services))
+	for i, b := range mc.Services {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.Cmd = b.Commands
 		cc.Container.Env = b.Environment
@@ -67,9 +67,9 @@ func assembleServiceContainers(bc *BuildConfig) []*ContainerConfig {
 }
 
 // assembleBuildContainers assembles container configs from user provided build config
-func assembleBuildContainers(bc *BuildConfig) ([]*ContainerConfig, error) {
-	bconts := make([]*ContainerConfig, len(bc.Build))
-	for i, b := range bc.Build {
+func assembleBuildContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
+	bconts := make([]*ContainerConfig, len(mc.Build))
+	for i, b := range mc.Build {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.WorkingDir = b.Workdir
 
@@ -83,7 +83,7 @@ func assembleBuildContainers(bc *BuildConfig) ([]*ContainerConfig, error) {
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
 		cc.Container.Cmd = []string{b.Shell, "-cex", b.BuildCmds()}
 		cc.Container.Env = b.Environment
-		src := bc.Context
+		src := mc.Context
 		if runtime.GOOS == "windows" {
 			src = toDockerWinPath(src)
 		}
@@ -93,7 +93,7 @@ func assembleBuildContainers(bc *BuildConfig) ([]*ContainerConfig, error) {
 		bconts[i] = cc
 
 		// Mount docker.sock in container if requested.
-		if bc.AllowDockerAccess {
+		if mc.AllowDockerAccess {
 			bconts[i].Container.Volumes[dockerSockFile] = struct{}{}
 			bconts[i].Host.Mounts = append(bconts[i].Host.Mounts,
 				mount.Mount{Target: dockerSockFile, Source: dockerSockFile, Type: mount.TypeBind})
@@ -113,10 +113,10 @@ func mergeErrors(err1, err2 error) error {
 	}
 }
 
-func readBuildConfig(bldfile string) (*BuildConfig, error) {
-	d, err := ioutil.ReadFile(bldfile)
+func readMoldConfig(moldFile string) (*MoldConfig, error) {
+	d, err := ioutil.ReadFile(moldFile)
 	if err == nil {
-		return NewBuildConfig(d)
+		return NewMoldConfig(d)
 	}
 	return nil, err
 }
