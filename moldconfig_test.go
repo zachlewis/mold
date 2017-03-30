@@ -2,15 +2,28 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
 	testMoldCfg     = "testdata/mold1.yml"
 	testMoldfileWin = "testdata/mold.win.yml"
 )
+
+func Test_DefaultMoldConfig(t *testing.T) {
+	mc := DefaultMoldConfig("test")
+	b, e := yaml.Marshal(mc)
+	if e != nil {
+		t.Fatal(e)
+	}
+
+	fmt.Printf("%s", b)
+}
 
 func Test_NewMoldConfig(t *testing.T) {
 	b, err := ioutil.ReadFile(testMoldCfg)

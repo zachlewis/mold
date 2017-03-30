@@ -58,7 +58,7 @@ func Test_Worker_GeneratesArtifacts(t *testing.T) {
 	if err := worker.RemoveArtifacts(); err != nil {
 		t.Fatal(err)
 	}
-	if err := worker.GenerateArtifacts("euforia/mold-test"); err != nil {
+	if err := worker.GenerateArtifacts("d3sw/mold-test"); err != nil {
 		t.Fatal(err)
 	}
 	worker.RemoveArtifacts()

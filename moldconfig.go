@@ -15,28 +15,38 @@ type MoldConfig struct {
 	//name string
 
 	// Name of the repo.  This is different from the above name in that it is just the name of the project
-	RepoName string
+	RepoName string `yaml:"-"`
 	// Git url
-	RepoURL string
+	RepoURL string `yaml:"-"`
 	// Tag or branch to build
-	BranchTag string
+	BranchTag string `yaml:"-"`
 	// LastCommit for the branch
-	LastCommit string
+	LastCommit string `yaml:"-"`
 	// Context is the root of the build.  This defaults to the current working
 	// directory.
-	Context string
+	Context string `yaml:",omitempty"`
 	// Service i.e. containers needed to perform build
 	Services []DockerRunConfig
 	// Builds to perform
 	Build []DockerRunConfig
 	// Docker images to generate
 	Artifacts Artifacts
-	// Notifications through out the build process
-	Notifications MultiNotification
+	// Notifications through out the build process. (experimental)
+	Notifications MultiNotification `yaml:"-"`
 	// Allow docker daemon access in the container
-	AllowDockerAccess bool `yaml:"docker"`
+	AllowDockerAccess bool `yaml:"docker,omitempty"`
 
-	Variables map[string]string
+	Variables map[string]string `yaml:",omitempty"`
+}
+
+func DefaultMoldConfig(name string) *MoldConfig {
+	return &MoldConfig{
+		Build: []DockerRunConfig{DockerRunConfig{}},
+		Artifacts: Artifacts{
+			Images:  []ImageConfig{ImageConfig{Name: name}},
+			Publish: []string{"master"},
+		},
+	}
 }
 
 // NewMoldConfig creates a new config from yaml formatted bytes

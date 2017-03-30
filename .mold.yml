@@ -1,7 +1,7 @@
 docker: true
 build:
     - image: golang:1.7.3
-      workdir: /go/src/github.com/euforia/mold
+      workdir: /go/src/github.com/d3sw/mold
       commands:
           - make deps
           - make test
@@ -10,4 +10,4 @@ build:
 
 artifacts:
     images:
-        - name: euforia/mold
+        - name: d3sw/mold

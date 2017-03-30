@@ -16,6 +16,7 @@ var (
 	//notify      = flag.Bool("n", false, `Enable notifications (default "false")`)
 	showVersion = flag.Bool("version", false, "Show version")
 	variable    = flag.String("var", "", "Show value of vairable specified in the configuration file")
+	initMoldCfg = flag.Bool("init", false, "Initialize a new mold file.")
 )
 
 func init() {
@@ -55,7 +56,14 @@ func main() {
 	if *showVersion {
 		printVersion()
 		os.Exit(0)
+	} else if *initMoldCfg {
+		if err := initializeMoldConfig("."); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
+
 	if len(*variable) > 0 {
 		val, err := getVar(*variable, *buildFile)
 		if err == nil {

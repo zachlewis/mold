@@ -2,12 +2,28 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
 func Test_printVersion(t *testing.T) {
 	printVersion()
 	printUsage()
+}
+
+func Test_MoldInit(t *testing.T) {
+	d, err := ioutil.TempDir("", "mold")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(d)
+
+	if err := initializeMoldConfig(d); err != nil {
+		//t.Error("should fail to init .mold.yml")
+		t.Fatal(err)
+	}
 }
 
 func Test_getVar_should_pass(t *testing.T) {

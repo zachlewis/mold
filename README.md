@@ -64,7 +64,7 @@ identical.  Multiple services and builds can be defined for each of these sectio
     # Perform 1 or more builds
     build:
         - image: golang:1.7.3
-          workdir: /go/src/github.com/euforia/mold
+          workdir: /go/src/github.com/d3sw/mold
           environment:
               - TEST_ENV=test_env
           commands:
@@ -83,7 +83,7 @@ identical.  Multiple services and builds can be defined for each of these sectio
         # Default registry to use if not specified. Blank uses docker hub
         registry: test.docker.registry
         images:
-            - name: euforia/mold-test
+            - name: d3sw/mold-test
               dockerfile: testdata/Dockerfile
               registry:
 
@@ -113,7 +113,7 @@ to run the build.
 #### workdir
 This is **path inside the container** where the project repository will be accessible (mounted).
 It can be an path of your choosing.  In the above example the source repo for mold will
-be available under `/go/src/github.com/euforia/mold` inside the `golang:1.7.3` container.
+be available under `/go/src/github.com/d3sw/mold` inside the `golang:1.7.3` container.
 
 #### image
 This is the docker image name used to build/test code.  These are disposable and not used to generate the final

@@ -1,6 +1,6 @@
 build:
     - image: alpine
-      workdir: /go/src/github.com/euforia/mold
+      workdir: /go/src/github.com/d3sw/mold
       commands:
           - sleep 1
           - hostname

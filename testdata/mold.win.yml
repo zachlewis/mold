@@ -18,7 +18,7 @@ build:
     - image: golang:1.7.3
       # Working directory in the container. This is where your code repo is mounted
       # and persists through out the lifecycle of the build.
-      workdir: /go/src/github.com/euforia/mold
+      workdir: /go/src/github.com/d3sw/mold
       environment:
           - TEST_ENV=test_env
       save: true
@@ -33,7 +33,7 @@ build:
     # Docker image to run commands on
     - image: golang:1.2.1
       # Working directory in the container
-      workdir: /go/src/github.com/euforia/mold
+      workdir: /go/src/github.com/d3sw/mold
       # Your customized build commands.
       commands:
           - hostname
@@ -51,7 +51,7 @@ artifacts:
     # Default registry to use if not specified. Blank uses docker hub
     registry: #test.docker.registry
     images:
-        - name: euforia/mold-test
+        - name: d3sw/mold-test
           dockerfile: testdata/Dockerfile
           registry:
           #cache:

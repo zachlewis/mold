@@ -1,7 +1,7 @@
 
 build:
     - image: golang:1.7.3
-      workdir: /go/src/github.com/euforia/mold
+      workdir: /go/src/github.com/d3sw/mold
       environment:
           - TEST_ENV=test_env
       commands:
@@ -15,7 +15,7 @@ build:
           - uptime
 
     - image: golang:1.2.1
-      workdir: /go/src/github.com/euforia/mold
+      workdir: /go/src/github.com/d3sw/mold
       commands:
           - hostname
           - uname -a
