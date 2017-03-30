@@ -75,7 +75,7 @@ func Test_LifeCycle_RunTarget(t *testing.T) {
 	mc.RepoName += "-test5"
 
 	lc := NewLifeCycle(worker)
-	if err := lc.RunTarget(mc, "artifacts", "euforia/mold-test"); err != nil {
+	if err := lc.RunTarget(mc, "artifacts", "d3sw/mold-test"); err != nil {
 		t.Fatal(err)
 	}
 

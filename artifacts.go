@@ -2,7 +2,7 @@ package main
 
 // Artifacts contains docker images to be built and optionally publish them
 type Artifacts struct {
-	Registry string // default registry value
+	Registry string `yaml:",omitempty"` // default registry value
 	Images   []ImageConfig
 	Publish  []string // branch/tag's to publish images on
 }

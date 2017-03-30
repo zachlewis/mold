@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	yaml "gopkg.in/yaml.v1"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/archive"
@@ -15,6 +18,35 @@ import (
 )
 
 const dockerSockFile = "/var/run/docker.sock"
+
+// initializeMoldConfig is called with the -init flag. It creates a new config at the root
+// of the project if one is not there.
+func initializeMoldConfig(dirname string) error {
+	cpath := filepath.Join(dirname, defaultBuildConfigName)
+	if _, err := os.Stat(cpath); err == nil {
+		return fmt.Errorf("%s already exists!", defaultBuildConfigName)
+	}
+
+	apath, err := filepath.Abs(dirname)
+	if err != nil {
+		return err
+	}
+	name := filepath.Base(apath)
+
+	mc := DefaultMoldConfig(name)
+	b, err := yaml.Marshal(mc)
+	if err != nil {
+		return err
+	}
+
+	fh, err := os.Create(cpath)
+	if err != nil {
+		return err
+	}
+
+	_, err = fh.Write(b)
+	return err
+}
 
 // parse git info from .git/HEAD to get name, branch and commit info.  If not found
 // that item will be an empty string

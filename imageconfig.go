@@ -9,11 +9,11 @@ import (
 // ImageConfig holds the configs needed to build an image
 type ImageConfig struct {
 	Name        string
-	Dockerfile  string
-	CachedBuild bool `json:"cache"` // whether to enable the no-cache option in docker build
+	Dockerfile  string `yaml:",omitempty"`
+	CachedBuild bool   `yaml:"cache,omitempty" json:"cache"` // whether to enable the no-cache option in docker build
 
-	Registry string
-	Context  string // working directory, url etc.
+	Registry string `yaml:",omitempty"`
+	Context  string `yaml:",omitempty"` // working directory, url etc.
 
 	baseimage string
 
