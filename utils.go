@@ -206,6 +206,8 @@ Options:
 
   -version  Show version
 
+  -init     Initialize a new %s for the project if one does not exist.
+
   -var      Show value of vairable specified in the configuration file  (default: NA)
 
   -uri      Docker URI          (default: %s)
@@ -226,5 +228,5 @@ Options:
                         <image_name> would be that as specified in your
                         configuration.
 
-`, *dockerURI, *buildFile)
+`, defaultBuildConfigName, *dockerURI, *buildFile)
 }
