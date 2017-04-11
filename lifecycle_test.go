@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func Test_LifeCycle(t *testing.T) {
+func Test_LifeCycle_Run(t *testing.T) {
 	mc, worker, err := initializeBuild("./testdata/mold3.yml", *dockerURI)
 	if err != nil {
 		t.Fatal(err)

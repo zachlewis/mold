@@ -8,11 +8,11 @@ build:
           - hostname
           - uname -a
           - sleep 2
-          - echo 'my very educated mother just showed us nine planets'
           - id
           - whoami
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
           - uptime
+          - printenv | grep -e VERSION -e COMMIT
 
     - image: golang:1.2.1
       workdir: /go/src/github.com/d3sw/mold
@@ -24,3 +24,4 @@ build:
           - sleep 3
           - whoami
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - printenv | grep -e VERSION -e COMMIT

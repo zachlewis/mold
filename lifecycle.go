@@ -123,6 +123,7 @@ func (lc *LifeCycle) printStartSummary() {
 	c := lc.cfg
 	lc.log.Write([]byte(fmt.Sprintf(`
 Name       : %s
+Version    : %s
 Branch/Tag : %s
 Repo       : %s
 
@@ -130,5 +131,5 @@ Services   : %d
 Builds     : %d
 Artifacts  : %d
 
-`, c.Name(), c.BranchTag, c.RepoURL, len(c.Services), len(c.Build), len(c.Artifacts.Images))))
+`, c.Name(), c.gitVersion.String(), c.BranchTag, c.RepoURL, len(c.Services), len(c.Build), len(c.Artifacts.Images))))
 }

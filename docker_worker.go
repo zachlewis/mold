@@ -74,7 +74,7 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 		cs.Network = dw.defaultNetConfig()
 		dw.serviceStates[i] = cs
 	}
-	//time.Now().Format(time.RFC3339)
+
 	// Build build container configs
 	bc, err := assembleBuildContainers(cfg)
 	if err != nil {
@@ -203,8 +203,14 @@ func (dw *DockerWorker) Publish(names ...string) error {
 				return errAborted
 			}
 			auth := dw.getRegistryAuth(v.Registry)
-			if err := dw.docker.PushImage(v.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", v.Name)); err != nil {
-				return err
+
+			regPaths := v.RegistryPaths()
+			for _, rp := range regPaths {
+
+				if err := dw.docker.PushImage(rp, auth, os.Stdout, fmt.Sprintf("[publish/%s]", rp)); err != nil {
+					return err
+				}
+
 			}
 		}
 	} else {
@@ -219,8 +225,14 @@ func (dw *DockerWorker) Publish(names ...string) error {
 			}
 
 			auth := dw.getRegistryAuth(a.Registry)
-			if err := dw.docker.PushImage(a.RegistryPath(), auth, os.Stdout, fmt.Sprintf("[publish/%s]", name)); err != nil {
-				return err
+
+			regPaths := a.RegistryPaths()
+			for _, rp := range regPaths {
+
+				if err := dw.docker.PushImage(rp, auth, os.Stdout, fmt.Sprintf("[publish/%s]", rp)); err != nil {
+					return err
+				}
+
 			}
 		}
 	}

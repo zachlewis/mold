@@ -4,4 +4,5 @@ artifacts:
     publish:
         - master
     images:
-        - name: d3sw/etcd:3.0.8
+        - name: d3sw/etcd
+          tags: ["3.0.8","${APP_VERSION}"]

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -37,6 +38,8 @@ type MoldConfig struct {
 	AllowDockerAccess bool `yaml:"docker,omitempty"`
 
 	Variables map[string]string `yaml:",omitempty"`
+	// stores version information from git
+	gitVersion *gitVersion
 }
 
 func DefaultMoldConfig(name string) *MoldConfig {
@@ -57,6 +60,8 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 		return nil, err
 	}
 
+	mc.gitVersion = getGitVersion(".")
+
 	// Set current working directory if not specified
 	if mc.Context == "" || mc.Context == "." || mc.Context == "./" {
 		if mc.Context, err = os.Getwd(); err != nil {
@@ -69,6 +74,7 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 			mc.Build[i].Shell = "/bin/sh"
 		}
 	}
+	mc.setBuildEnvVars()
 
 	// Set artifact defaults
 	for i, v := range mc.Artifacts.Images {
@@ -78,6 +84,12 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 		}
 	}
 	mc.Artifacts.setDefaults()
+	mc.normalizeArtifactsImageTags()
+
+	if err = mc.Artifacts.ValidateImageConfigs(); err != nil {
+		return nil, err
+	}
+
 	mc.checkRepoInfo()
 	mc.readEnvVars()
 
@@ -93,6 +105,17 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 	return &mc, err
 }
 
+// Normalize image tag vars.
+
+func (mc *MoldConfig) normalizeArtifactsImageTags() {
+	for i := range mc.Artifacts.Images {
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION}", mc.gitVersion.String())
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION_SHORT}", mc.gitVersion.Version())
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_COMMIT}", mc.gitVersion.Commit(false))
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_COMMIT_INDEX}", fmt.Sprintf("%d", mc.gitVersion.index))
+	}
+}
+
 // Name returns the name of the build image to create
 func (mc *MoldConfig) Name() string {
 	if len(mc.LastCommit) > 7 {
@@ -102,7 +125,25 @@ func (mc *MoldConfig) Name() string {
 	return mc.RepoName + "-" + mc.BranchTag
 }
 
-// check and set repo info and naming structure
+// Inject app version as env. var. to build container
+func (mc *MoldConfig) setBuildEnvVars() {
+	evars := []string{
+		"APP_VERSION=" + mc.gitVersion.String(),
+		"APP_VERSION_SHORT=" + mc.gitVersion.Version(),
+		"APP_COMMIT=" + mc.gitVersion.Commit(false),
+		fmt.Sprintf("APP_COMMIT_INDEX=%d", mc.gitVersion.index),
+	}
+
+	for i, v := range mc.Build {
+		if v.Environment == nil {
+			mc.Build[i].Environment = evars
+		} else {
+			mc.Build[i].Environment = append(mc.Build[i].Environment, evars...)
+		}
+	}
+}
+
+// check and set repo info and naming structure - RE-VISIT
 func (mc *MoldConfig) checkRepoInfo() {
 
 	name, bt, lc := getRepoInfo(mc.Context)
@@ -118,7 +159,7 @@ func (mc *MoldConfig) checkRepoInfo() {
 }
 
 // read env vars and config.  These take precedence over all configs overriding
-// anything prior
+// anything prior - RE-VISIT
 func (mc *MoldConfig) readEnvVars() {
 	if cmt := os.Getenv("GIT_COMMIT"); len(cmt) > 7 {
 		mc.LastCommit = cmt[:8]

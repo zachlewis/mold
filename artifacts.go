@@ -7,6 +7,16 @@ type Artifacts struct {
 	Publish  []string // branch/tag's to publish images on
 }
 
+// ValidateImageConfigs validates all image configs
+func (art *Artifacts) ValidateImageConfigs() error {
+	for _, v := range art.Images {
+		if err := v.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // GetImage return an image config of the name.  If the image is not found, nil
 // is returned
 func (art *Artifacts) GetImage(name string) *ImageConfig {
@@ -26,8 +36,14 @@ func (art *Artifacts) setDefaults() {
 		if len(img.Dockerfile) == 0 {
 			art.Images[i].Dockerfile = "Dockerfile"
 		}
-		if len(img.Registry) == 0 && len(art.Registry) > 0 {
-			art.Images[i].Registry = art.Registry
+	}
+
+	if len(art.Registry) > 0 {
+		for i, img := range art.Images {
+			if len(img.Registry) == 0 {
+				art.Images[i].Registry = art.Registry
+			}
 		}
 	}
+
 }

@@ -27,6 +27,7 @@ build:
           - whoami
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
           - uptime
+          - printenv
       # a quoted list of ports ala docker-compose
       ports:
         - "5432:5432"

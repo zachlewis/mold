@@ -177,13 +177,13 @@ func (dkr *Docker) BuildImageAsync(ic *ImageConfig, logWriter io.Writer, prefix 
 	}
 	opts := types.ImageBuildOptions{
 		Dockerfile: ic.Dockerfile,
-		Tags:       []string{ic.Name},
+		Tags:       ic.DefaultRegistryPaths(),
 		Remove:     true, // remove intermediate images
 		NoCache:    !ic.CachedBuild,
 	}
-	if len(ic.Registry) > 0 {
-		opts.Tags = append(opts.Tags, ic.RegistryPath())
-	}
+
+	rps := ic.CustomRegistryPaths()
+	opts.Tags = append(opts.Tags, rps...)
 
 	rsp, err := dkr.cli.ImageBuild(context.Background(), bldCxt, opts)
 	if err != nil {

@@ -151,6 +151,17 @@ Dockerfile works can be found [here](https://docs.docker.com/engine/reference/bu
 
 - **registry**: Registry to push to.  If not specified the default one is used.
 
+- **tags**: A list of additional image tags to be applied.  The above mentioned environment variables are
+available here to use.
+
+### Environment Variables
+The following environment variables are available in your builds as well as in `tags` in the `artifacts` section:
+
+- APP_VERSION
+- APP_VERSION_SHORT
+- APP_COMMIT
+- APP_COMMIT_INDEX
+
 ## Cleanup
 As you perform builds, there will be a build of containers and images left behind that may no
 longer be needed.  You can pick and choose which ones to keep.  A helper script has been provided
