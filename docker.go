@@ -68,9 +68,9 @@ func NewDocker(uri string) (*Docker, error) {
 		hcli    *http.Client
 		version = os.Getenv("DOCKER_API_VERSION")
 	)
-	if version == "" {
-		version = client.DefaultVersion
-	}
+	//if version == "" {
+	//      client.
+	//}
 	cli, err := client.NewClient(uri, version, hcli, nil)
 	if err != nil {
 		return nil, err
