@@ -10,9 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/docker/docker/api/types/mount"
@@ -21,47 +18,6 @@ import (
 )
 
 const dockerSockFile = "/var/run/docker.sock"
-
-type gitVersion struct {
-	latestTag *plumbing.Reference
-	head      *plumbing.Reference
-	index     int
-}
-
-func (a *gitVersion) Version() string {
-	if a.latestTag != nil {
-		return strings.TrimPrefix(a.latestTag.Name().Short(), "v")
-	}
-
-	return "0.0.0"
-}
-
-// Commit returns the last git commit. If long is true then the full string is returned.
-func (a *gitVersion) Commit(long bool) string {
-	if a.head == nil {
-		return ""
-	}
-	return a.head.Hash().String()[:7]
-}
-
-func (a *gitVersion) Suffix() string {
-	if a.head != nil {
-
-		if a.latestTag != nil && a.index == 0 {
-			return ""
-		}
-
-		return fmt.Sprintf("%d-%s", a.index, a.head.Hash().String()[:7])
-	}
-	return ""
-}
-
-func (a *gitVersion) String() string {
-	if s := a.Suffix(); s != "" {
-		return a.Version() + "-" + a.Suffix()
-	}
-	return a.Version()
-}
 
 // initializeMoldConfig is called with the -init flag. It creates a new config at the root
 // of the project if one is not there.
@@ -90,57 +46,6 @@ func initializeMoldConfig(dirname string) error {
 
 	_, err = fh.Write(b)
 	return err
-}
-
-// get the latest tag, no of commits from tag and current hash
-func getGitVersion(path string) (av *gitVersion) {
-	av = &gitVersion{}
-
-	r, err := git.PlainOpen(path)
-	if err != nil {
-		return
-	}
-
-	av.head, _ = r.Head()
-
-	refIter, err := r.Tags()
-	if err != nil {
-		return
-	}
-	refs := make([]*plumbing.Reference, 0)
-	refIter.ForEach(func(ref *plumbing.Reference) error {
-		refs = append(refs, ref)
-		return nil
-	})
-	if len(refs) > 0 {
-		av.latestTag = refs[len(refs)-1]
-	}
-
-	if av.head == nil || av.latestTag == nil {
-		return
-	}
-	if av.head.Hash().String() == av.latestTag.Hash().String() {
-		return
-	}
-
-	o, err := r.CommitObject(av.head.Hash())
-	if err != nil {
-		return
-	}
-	hs, err := o.History()
-	if err != nil {
-		return
-	}
-
-	//c := 0
-	for i, v := range hs[1:] {
-		if v.Hash.String() == av.latestTag.Hash().String() {
-			av.index = i + 1
-			break
-		}
-	}
-
-	return
 }
 
 // parse git info from .git/HEAD to get name, branch and commit info.  If not found
