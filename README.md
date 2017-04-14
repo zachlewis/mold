@@ -3,8 +3,11 @@ Mold is a tool to help test, build, package and publish your application complet
 It automates the process from installing dependencies and testing to packaging and publishing your image to a registry.
 
 Mold starts by creating an isolated network to run your build, followed by installing your dependencies, running
-unit tests and building any needed binaries in a container.  These binaries are in turn used to package the container
+unit tests and building any needed binaries in a container.  These binaries are in turn used to package the
 image and publish to a registry.
+
+Mold also helps manage versioning by leveraging git and using tags as points of reference to automate
+version computation and appropriately tagging images.
 
 ## Installation
 [Download](https://github.com/d3sw/mold/releases) the binary based on your OS.  Once uncompressed copy it into your system PATH.
@@ -110,3 +113,9 @@ Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/rele
 ### 3. Where should I run mold? Should it be triggered on the CI server or should I run it locally?
 
 You can run mold locally or be incorporate it into your CI pipeline and run on you CI server.
+
+## Roadmap
+- 0.4.0
+    - Build image optimization and caching.
+- 0.3.0
+    - First official open-source release.
