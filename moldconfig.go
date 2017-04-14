@@ -60,7 +60,7 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 		return nil, err
 	}
 
-	mc.gitVersion = getGitVersion(".")
+	mc.gitVersion, _ = newGitVersion(".")
 
 	// Set current working directory if not specified
 	if mc.Context == "" || mc.Context == "." || mc.Context == "./" {
@@ -109,10 +109,10 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 
 func (mc *MoldConfig) normalizeArtifactsImageTags() {
 	for i := range mc.Artifacts.Images {
-		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION}", mc.gitVersion.String())
-		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION_SHORT}", mc.gitVersion.Version())
-		mc.Artifacts.Images[i].ReplaceTagVars("${APP_COMMIT}", mc.gitVersion.Commit(false))
-		mc.Artifacts.Images[i].ReplaceTagVars("${APP_COMMIT_INDEX}", fmt.Sprintf("%d", mc.gitVersion.index))
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION}", mc.gitVersion.Version())
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION_SHORT}", mc.gitVersion.TagVersion())
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_COMMIT}", mc.gitVersion.Commit())
+		mc.Artifacts.Images[i].ReplaceTagVars("${APP_COMMIT_INDEX}", fmt.Sprintf("%d", mc.gitVersion.distance))
 	}
 }
 
@@ -120,18 +120,19 @@ func (mc *MoldConfig) normalizeArtifactsImageTags() {
 func (mc *MoldConfig) Name() string {
 	if len(mc.LastCommit) > 7 {
 		return mc.RepoName + "-" + mc.BranchTag + "-" + mc.LastCommit[:8]
+	} else if len(mc.BranchTag) > 0 {
+		return mc.RepoName + "-" + mc.BranchTag
 	}
-
-	return mc.RepoName + "-" + mc.BranchTag
+	return mc.RepoName
 }
 
 // Inject app version as env. var. to build container
 func (mc *MoldConfig) setBuildEnvVars() {
 	evars := []string{
-		"APP_VERSION=" + mc.gitVersion.String(),
-		"APP_VERSION_SHORT=" + mc.gitVersion.Version(),
-		"APP_COMMIT=" + mc.gitVersion.Commit(false),
-		fmt.Sprintf("APP_COMMIT_INDEX=%d", mc.gitVersion.index),
+		"APP_VERSION=" + mc.gitVersion.Version(),
+		"APP_VERSION_SHORT=" + mc.gitVersion.TagVersion(),
+		"APP_COMMIT=" + mc.gitVersion.Commit(),
+		fmt.Sprintf("APP_COMMIT_INDEX=%d", mc.gitVersion.distance),
 	}
 
 	for i, v := range mc.Build {

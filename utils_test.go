@@ -1,13 +1,17 @@
 package main
 
-import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"testing"
-)
+import "testing"
 
-func Test_getGitVersion(t *testing.T) {
+func Test_gitVersion(t *testing.T) {
+	gt, err := newGitVersion(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(gt.Version())
+}
+
+/*func Test_getGitVersion(t *testing.T) {
 	abs, _ := filepath.Abs(".")
 	a := getGitVersion(abs)
 	if a.Version() == "0.0.0" {
@@ -36,4 +40,4 @@ func Test_getGitVersion2(t *testing.T) {
 	if a.head != nil {
 		t.Error("head should be nil")
 	}
-}
+}*/

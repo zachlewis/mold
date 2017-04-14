@@ -131,5 +131,5 @@ Services   : %d
 Builds     : %d
 Artifacts  : %d
 
-`, c.Name(), c.gitVersion.String(), c.BranchTag, c.RepoURL, len(c.Services), len(c.Build), len(c.Artifacts.Images))))
+`, c.Name(), c.gitVersion.Version(), c.BranchTag, c.RepoURL, len(c.Services), len(c.Build), len(c.Artifacts.Images))))
 }
