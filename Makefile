@@ -19,9 +19,7 @@ test:
 	go test -v -coverprofile=coverage.out ./...
 
 deps:
-	go get github.com/tools/godep
-	go get golang.org/x/tools/cmd/cover
-	godep restore -v
+	go get -d .
 
 ${NAME}:
 	$(BUILD_CMD) -o $(NAME) .

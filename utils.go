@@ -205,29 +205,31 @@ registry, all controlled via a single configuration file.
 
 Options:
 
-  -version  Show version
+  -version      Show version
 
-  -init     Initialize a new %s for the project if one does not exist.
+  -app-version  Show the app version from git (default: 0.0.0)
 
-  -var      Show value of vairable specified in the configuration file  (default: NA)
+  -init         Initialize a new %s for the project if one does not exist.
 
-  -uri      Docker URI          (default: %s)
+  -var          Show value of vairable specified in the configuration file  (default: NA)
 
-  -f        Configuration file  (default: %s)
+  -uri          Docker URI          (default: %s)
 
-  -t        Target to build     (default: all)
+  -f            Configuration file  (default: %s)
 
-            build       Only perform the build phase.
+  -t            Target to build     (default: all)
 
-            artifacts   Only generate artifacts.  Specific artifacts can be built
-                        using artifacts/<image_name> as the target where
-                        <image_name> would be that as specified in your
-                        configuration.
+                build       Only perform the build phase.
 
-            publish     Only publish artifacts.  Specific artifacts can be published
-                        using publish/<image_name> as the target where
-                        <image_name> would be that as specified in your
-                        configuration.
+                artifacts   Only generate artifacts.  Specific artifacts can be built
+                            using artifacts/<image_name> as the target where
+                            <image_name> would be that as specified in your
+                            configuration.
+
+                publish     Only publish artifacts.  Specific artifacts can be published
+                            using publish/<image_name> as the target where
+                            <image_name> would be that as specified in your
+                            configuration.
 
 `, defaultBuildConfigName, *dockerURI, *buildFile)
 }

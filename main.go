@@ -13,10 +13,12 @@ var (
 	dockerURI   = flag.String("uri", "unix:///var/run/docker.sock", "Docker URI")
 	buildFile   = flag.String("f", defaultBuildConfigName, "Build config file")
 	buildTarget = flag.String("t", "", "Build target [build|artifacts|publish]")
-	//notify      = flag.Bool("n", false, `Enable notifications (default "false")`)
+
 	showVersion = flag.Bool("version", false, "Show version")
 	variable    = flag.String("var", "", "Show value of vairable specified in the configuration file")
-	initMoldCfg = flag.Bool("init", false, "Initialize a new mold file.")
+
+	initMoldCfg    = flag.Bool("init", false, "Initialize a new mold file.")
+	showAppVersion = flag.Bool("app-version", false, "Show the app version per mold")
 )
 
 func init() {
@@ -55,6 +57,10 @@ func getVar(key, moldFile string) (string, error) {
 func main() {
 	if *showVersion {
 		printVersion()
+		os.Exit(0)
+	} else if *showAppVersion {
+		gt, _ := newGitVersion(".")
+		fmt.Println(gt.Version())
 		os.Exit(0)
 	} else if *initMoldCfg {
 		if err := initializeMoldConfig("."); err != nil {

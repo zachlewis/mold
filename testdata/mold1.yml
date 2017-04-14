@@ -53,10 +53,7 @@ artifacts:
     registry: #test.docker.registry
     images:
         - name: d3sw/mold-test
+          tags: ["${APP_VERSION}"]
           dockerfile: testdata/Dockerfile
           registry:
           #cache:
-# Send notifications
-notifications:
-    slack:
-        channel: "#test-channel"

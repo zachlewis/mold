@@ -32,8 +32,6 @@ type MoldConfig struct {
 	Build []DockerRunConfig
 	// Docker images to generate
 	Artifacts Artifacts
-	// Notifications through out the build process. (experimental)
-	Notifications MultiNotification `yaml:"-"`
 	// Allow docker daemon access in the container
 	AllowDockerAccess bool `yaml:"docker,omitempty"`
 
