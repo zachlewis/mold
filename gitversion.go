@@ -47,7 +47,7 @@ func (gt *gitVersion) TagVersion() string {
 func (gt *gitVersion) Version() string {
 	cmt := gt.Commit()
 	tv := gt.TagVersion()
-	if cmt == "" {
+	if cmt == "" || gt.distance == 0 {
 		return tv
 	}
 	return fmt.Sprintf("%s-%d-%s", tv, gt.distance, cmt)
