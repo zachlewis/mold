@@ -80,7 +80,7 @@ func (lc *LifeCycle) shouldPublishArtifacts() bool {
 			return true
 		}
 		if m, err := regexp.MatchString(p, lc.cfg.BranchTag); err == nil {
-			if m == true {
+			if m {
 				return true
 			}
 		}
