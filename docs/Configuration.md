@@ -100,10 +100,10 @@ This option sets the default registry for all images in the case where it is not
 It defaults to [Docker Hub](https://hub.docker.com) if not specified.
 
 #### publish
-This option specifies which branches will trigger a push to the registry.  Available options
-are:
+This option specifies which branches will trigger a push to the registry.  Both exact and regular expression matches are supported.
 
-- `*` For all branches/tags
+- `.*` For all branches/tags
+- `[v].+` For a version tag
 - Name of a branch/tag
 
 #### images
