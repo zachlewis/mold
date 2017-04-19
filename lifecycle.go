@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 )
 
 // LifeCyclePhase represents a phase in the lifecycle
@@ -75,9 +76,13 @@ func (lc *LifeCycle) Run(cfg *MoldConfig) error {
 func (lc *LifeCycle) shouldPublishArtifacts() bool {
 	arts := lc.cfg.Artifacts
 	for _, p := range arts.Publish {
-		switch p {
-		case "*", lc.cfg.BranchTag:
+		if p == lc.cfg.BranchTag {
 			return true
+		}
+		if m, err := regexp.MatchString(p, lc.cfg.BranchTag); err == nil {
+			if m {
+				return true
+			}
 		}
 	}
 	return false
