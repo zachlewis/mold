@@ -96,7 +96,7 @@ func (dkr *Docker) ImageAvailableLocally(imageName string) bool {
 // available. This is a non-blocking call.
 func (dkr *Docker) StartContainer(cc *ContainerConfig, wr io.Writer, prefix string) error {
 	if !dkr.ImageAvailableLocally(cc.Container.Image) {
-		if err := dkr.PullImage(cc.Container.Image, wr, prefix); err != nil {
+		if err := dkr.PullImage(cc.Container.Image, nil, wr, prefix); err != nil {
 			return err
 		}
 	}
@@ -166,6 +166,15 @@ func (dkr *Docker) TailLogs(containerID string, wr io.Writer, prefix string) err
 func (dkr *Docker) RemoveContainer(containerID string, force bool) error {
 	options := types.ContainerRemoveOptions{Force: force}
 	return dkr.cli.ContainerRemove(context.Background(), containerID, options)
+}
+
+// BuildImageOfContainer creates an image of a container
+func (dkr *Docker) BuildImageOfContainer(containerID string, reference string) error {
+	options := types.ContainerCommitOptions{
+		Reference: reference,
+	}
+	_, err := dkr.cli.ContainerCommit(context.Background(), containerID, options)
+	return err
 }
 
 // BuildImageAsync builds a docker images based on the config and writes the log out
@@ -312,8 +321,16 @@ func (dkr *Docker) PushImage(imageRef string, authCfg *types.AuthConfig, logWrit
 }
 
 // PullImage pulls a remote image from a registry down locally
-func (dkr *Docker) PullImage(imageRef string, logWriter io.Writer, prefix string) error {
+func (dkr *Docker) PullImage(imageRef string, authCfg *types.AuthConfig, logWriter io.Writer, prefix string) error {
 	opts := types.ImagePullOptions{}
+	if authCfg != nil {
+		if a, err := dkr.GetAuthBase64(*authCfg); err != nil {
+			logWriter.Write([]byte(fmt.Sprintf("%s Error: %s\n", prefix, err.Error())))
+			return err
+		} else {
+			opts.RegistryAuth = a
+		}
+	}
 	rsp, err := dkr.cli.ImagePull(context.Background(), imageRef, opts)
 	if err != nil {
 		return err

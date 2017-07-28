@@ -1,0 +1,52 @@
+
+build:
+    - image: golang:1.7.3
+      workdir: /go/src/github.com/d3sw/mold
+      environment:
+          - TEST_ENV=test_env
+      commands:
+          - hostname
+          - uname -a
+          - sleep 2
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - uptime
+          - printenv | grep -e VERSION -e COMMIT
+      imgcache:
+          registry: myregistry
+          name: mold
+    - image: golang:1.7.3
+      workdir: /go/src/github.com/d3sw/mold
+      environment:
+          - TEST_ENV=test_env
+      commands:
+          - hostname
+          - uname -a
+          - sleep 2
+          - id
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - uptime
+          - printenv | grep -e VERSION -e COMMIT
+    - image: golang:1.2.1
+      workdir: /go/src/github.com/d3sw/mold
+      commands:
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - sleep 3
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - printenv | grep -e VERSION -e COMMIT
+    - image: golang:1.2.1
+      workdir: /go/src/github.com/d3sw/mold
+      commands:
+          - hostname
+          - uname -a
+          - id
+          - sleep 3
+          - whoami
+          - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
+          - printenv | grep -e VERSION -e COMMIT

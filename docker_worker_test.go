@@ -25,6 +25,21 @@ func Test_Worker_Configure(t *testing.T) {
 	}
 
 }
+func Test_Worker_Configure_ImgCache(t *testing.T) {
+	testMc, worker, _ := initializeBuild("./testdata/mold9.yml", "")
+	if err := worker.Configure(testMc); err != nil {
+		t.Fatal(err)
+	}
+	if len(worker.buildStates) != len(testMc.Build) {
+		t.Fatal("service mismatch")
+	}
+	if worker.buildStates[0].ImgCache.Tag != "6c1ceac75ab41c59e4c98c0156551fb8c379cc90ea924cfbf58c1effdaf79b25" {
+		t.Fatalf("ImgCache tag value is incorrect: %s", worker.buildStates[0].ImgCache.Tag)
+	}
+	if worker.buildStates[1].ImgCache != nil {
+		t.Fatalf("ImgCache should be nil when not specified in the mold config")
+	}
+}
 
 func Test_Worker_Build(t *testing.T) {
 	testMc, worker, _ := initializeBuild("./testdata/mold2.yml", "")

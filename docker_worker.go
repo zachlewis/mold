@@ -95,9 +95,18 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 			ContainerConfig: s,
 			Type:            BuildContainerType,
 			save:            dw.buildConfig.Build[i].Save,
+			ImgCache:        dw.buildConfig.Build[i].ImgCache,
 		}
 		cs.Name = fmt.Sprintf("%s-%d-%d", dw.buildConfig.Name(), i, time.Now().UnixNano())
 		cs.Network = dw.defaultNetConfig()
+
+		if cs.ImgCache != nil && len(cs.ImgCache.Registry) > 0 && len(cs.ImgCache.Name) > 0 {
+			hash, err := getBuildHash(cs.ContainerConfig)
+			if err != nil {
+				return err
+			}
+			cs.ImgCache.Tag = hash
+		}
 		dw.buildStates[i] = cs
 	}
 
@@ -345,6 +354,10 @@ func (dw *DockerWorker) Build() error {
 		for _, b := range dw.buildStates {
 			if b.status != "success" {
 				err = mergeErrors(err, fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image))
+			} else {
+				if e := dw.cacheImage(*b); e != nil {
+					err = mergeErrors(err, fmt.Errorf("build image cache failed: %s %s", b.Name, b.Container.Image))
+				}
 			}
 		}
 
@@ -404,8 +417,22 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
 	go dw.watchBuild()
 
-	for i, cs := range dw.buildStates {
-		err := dw.docker.StartContainer(dw.buildStates[i].ContainerConfig, dw.log, "")
+	for _, cs := range dw.buildStates {
+		if cs.ImgCache != nil &&
+			len(cs.ImgCache.Registry) > 0 &&
+			len(cs.ImgCache.Name) > 0 &&
+			len(cs.ImgCache.Tag) > 0 {
+			cacheImgName := getCacheImageName(cs.ImgCache)
+			auth := dw.getRegistryAuth(cs.ImgCache.Registry)
+			err := dw.docker.PullImage(cacheImgName, auth, dw.log, "cache")
+			if err == nil {
+				if dw.docker.ImageAvailableLocally(cacheImgName) {
+					cs.ContainerConfig.Container.Image = cacheImgName
+				}
+			}
+		}
+
+		err := dw.docker.StartContainer(cs.ContainerConfig, dw.log, "")
 		if err == nil {
 			os.Stdout.Write([]byte(fmt.Sprintf("[build/%s] Started %s\n", cs.Name, cs.Container.Image)))
 			if cs.Type == BuildContainerType && tailLog {
@@ -421,8 +448,25 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 		}
 		return dw.done, err
 	}
-
 	return dw.done, nil
+}
+
+// cacheImage pushes the build image a registry
+func (dw *DockerWorker) cacheImage(cs containerState) error {
+	if cs.ImgCache != nil &&
+		len(cs.ImgCache.Registry) > 0 &&
+		len(cs.ImgCache.Name) > 0 &&
+		len(cs.ImgCache.Tag) > 0 {
+		img := getCacheImageName(cs.ImgCache)
+		if err := dw.docker.BuildImageOfContainer(cs.ID(), img); err != nil {
+			return err
+		}
+		auth := dw.getRegistryAuth(cs.ImgCache.Registry)
+		if err := dw.docker.PushImage(img, auth, os.Stdout, fmt.Sprintf("[cache/%s]", img)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Teardown stops and removes all services spun up before the build as part of cleanup
