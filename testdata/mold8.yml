@@ -1,0 +1,7 @@
+build:
+    - image: alpine:3.5
+      workdir: /app
+      commands:
+        - nc -l 4444
+      ports:
+        - "4444:4444"

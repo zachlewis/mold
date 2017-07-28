@@ -1,0 +1,18 @@
+build:
+    - image: alpine
+      workdir: /go/src/github.com/d3sw/mold
+      commands:
+          - sleep 1
+          - hostname
+          - uname -a
+          - echo 'my very educated mother just showed us nine planets'
+          - id
+          - whoami
+
+
+# Test publish option
+artifacts:
+    publish:
+        - master
+    images:
+        - name: foo/bar

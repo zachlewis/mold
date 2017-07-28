@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Doctor clean (drclean) cleans up residual docker containers and images. None of
+# the removal commands are forced.
+#
+
+# Remove exited containers
+for exited in $(docker ps -a | grep Exited | cut -d ' ' -f 1); do
+	docker rm $exited;
+done
+
+# Remove intermediate images
+for img in $(docker images | grep "<none>" | awk '{print $3}'); do
+	docker rmi $img;
+done
+
+# Remove dangling volumes
+dangling=`docker volume ls -qf dangling=true`
+if [ "$dangling" != "" ]; then
+    docker volume rm $dangling
+fi
