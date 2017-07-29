@@ -33,7 +33,7 @@ func Test_Worker_Configure_ImgCache(t *testing.T) {
 	if len(worker.buildStates) != len(testMc.Build) {
 		t.Fatal("service mismatch")
 	}
-	if worker.buildStates[0].ImgCache.Tag != "6c1ceac75ab41c59e4c98c0156551fb8c379cc90ea924cfbf58c1effdaf79b25" {
+	if worker.buildStates[0].ImgCache.Tag != "24739ed1917361a71da27424c1fec6319ff35d25d8031e210b7fcc3cee84b874" {
 		t.Fatalf("ImgCache tag value is incorrect: %s", worker.buildStates[0].ImgCache.Tag)
 	}
 	if worker.buildStates[1].ImgCache != nil {
