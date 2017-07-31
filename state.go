@@ -19,7 +19,7 @@ type containerState struct {
 	status   string        // build status of the container
 	done     bool          // container execution completed
 	save     bool          // keep the container after run completes
-	ImgCache *ImgCache
+	imgCache *ImgCache
 }
 
 func (cs *containerState) Status() string {

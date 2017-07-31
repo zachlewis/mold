@@ -22,6 +22,14 @@ type ImgCache struct {
 	Tag      string
 }
 
+func (ic *ImgCache) IsEnabled() bool {
+	return ic != nil && len(ic.Registry) > 0 && len(ic.Name) > 0
+}
+
+func (ic *ImgCache) IsTagSet() bool {
+	return ic != nil && len(ic.Tag) > 0
+}
+
 // BuildCmds returns the command string that is passed in to bash -cex on the
 // container.
 func (cb *DockerRunConfig) BuildCmds() string {

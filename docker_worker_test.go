@@ -33,11 +33,15 @@ func Test_Worker_Configure_ImgCache(t *testing.T) {
 	if len(worker.buildStates) != len(testMc.Build) {
 		t.Fatal("service mismatch")
 	}
-	if worker.buildStates[0].ImgCache.Tag != "24739ed1917361a71da27424c1fec6319ff35d25d8031e210b7fcc3cee84b874" {
-		t.Fatalf("ImgCache tag value is incorrect: %s", worker.buildStates[0].ImgCache.Tag)
+	if worker.buildStates[0].imgCache == nil {
+		t.Fatalf("imgCache tag value is not set")
 	}
-	if worker.buildStates[1].ImgCache != nil {
-		t.Fatalf("ImgCache should be nil when not specified in the mold config")
+	if len(worker.buildStates[0].imgCache.Tag) != 64 {
+		t.Fatalf("imgCache tag value is not set to the correct format: %s", worker.buildStates[0].imgCache.Tag)
+	}
+
+	if worker.buildStates[1].imgCache != nil {
+		t.Fatalf("imgCache should be nil when not specified in the mold config")
 	}
 }
 

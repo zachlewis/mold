@@ -95,17 +95,17 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 			ContainerConfig: s,
 			Type:            BuildContainerType,
 			save:            dw.buildConfig.Build[i].Save,
-			ImgCache:        dw.buildConfig.Build[i].ImgCache,
+			imgCache:        dw.buildConfig.Build[i].ImgCache,
 		}
 		cs.Name = fmt.Sprintf("%s-%d-%d", dw.buildConfig.Name(), i, time.Now().UnixNano())
 		cs.Network = dw.defaultNetConfig()
 
-		if cs.ImgCache != nil && len(cs.ImgCache.Registry) > 0 && len(cs.ImgCache.Name) > 0 {
+		if cs.imgCache.IsEnabled() {
 			hash, err := getBuildHash(cs.ContainerConfig)
 			if err != nil {
 				return err
 			}
-			cs.ImgCache.Tag = hash
+			cs.imgCache.Tag = hash
 		}
 		dw.buildStates[i] = cs
 	}
@@ -418,12 +418,9 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 	go dw.watchBuild()
 
 	for _, cs := range dw.buildStates {
-		if cs.ImgCache != nil &&
-			len(cs.ImgCache.Registry) > 0 &&
-			len(cs.ImgCache.Name) > 0 &&
-			len(cs.ImgCache.Tag) > 0 {
-			cacheImgName := getCacheImageName(cs.ImgCache)
-			auth := dw.getRegistryAuth(cs.ImgCache.Registry)
+		if cs.imgCache.IsEnabled() && cs.imgCache.IsTagSet() {
+			cacheImgName := getCacheImageName(cs.imgCache)
+			auth := dw.getRegistryAuth(cs.imgCache.Registry)
 			err := dw.docker.PullImage(cacheImgName, auth, dw.log, "cache")
 			if err == nil {
 				if dw.docker.ImageAvailableLocally(cacheImgName) {
@@ -453,15 +450,12 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
 // cacheImage pushes the build image a registry
 func (dw *DockerWorker) cacheImage(cs containerState) error {
-	if cs.ImgCache != nil &&
-		len(cs.ImgCache.Registry) > 0 &&
-		len(cs.ImgCache.Name) > 0 &&
-		len(cs.ImgCache.Tag) > 0 {
-		img := getCacheImageName(cs.ImgCache)
+	if cs.imgCache.IsEnabled() && cs.imgCache.IsTagSet() {
+		img := getCacheImageName(cs.imgCache)
 		if err := dw.docker.BuildImageOfContainer(cs.ID(), img); err != nil {
 			return err
 		}
-		auth := dw.getRegistryAuth(cs.ImgCache.Registry)
+		auth := dw.getRegistryAuth(cs.imgCache.Registry)
 		if err := dw.docker.PushImage(img, auth, os.Stdout, fmt.Sprintf("[cache/%s]", img)); err != nil {
 			return err
 		}
