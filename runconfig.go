@@ -10,24 +10,10 @@ type DockerRunConfig struct {
 	Commands    []string // Commands to run in the container
 	Workdir     string   // Working directory in the container
 	Environment []string
-	Save        bool      `yaml:",omitempty"` // do not remove container after completion
-	Shell       string    `yaml:",omitempty"`
-	Ports       []string  `yaml:",omitempty"` // a quoted list of port mappings
-	ImgCache    *ImgCache `yaml:",omitempty"`
-}
-
-type ImgCache struct {
-	Registry string
-	Name     string
-	Tag      string
-}
-
-func (ic *ImgCache) IsEnabled() bool {
-	return ic != nil && len(ic.Registry) > 0 && len(ic.Name) > 0
-}
-
-func (ic *ImgCache) IsTagSet() bool {
-	return ic != nil && len(ic.Tag) > 0
+	Save        bool     `yaml:",omitempty"` // do not remove container after completion
+	Shell       string   `yaml:",omitempty"`
+	Ports       []string `yaml:",omitempty"` // a quoted list of port mappings
+	Cache       bool     `yaml:",omitempty"`
 }
 
 // BuildCmds returns the command string that is passed in to bash -cex on the

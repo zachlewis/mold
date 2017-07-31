@@ -94,14 +94,6 @@ func getBuildHash(cfg *ContainerConfig) (string, error) {
 	return fmt.Sprintf("%x", h), nil
 }
 
-// getCacheImageName gets the name to be used for caching a image
-func getCacheImageName(c *ImgCache) string {
-	if c == nil {
-		return ""
-	}
-	return fmt.Sprintf("%s/%s:%s", c.Registry, c.Name, c.Tag)
-}
-
 // returns the name of the image.  it parses out the namespace and tag if provided
 func nameFromImageName(imageName string) string {
 	iparts := strings.Split(strings.Split(imageName, ":")[0], "/")

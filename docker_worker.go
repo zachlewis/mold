@@ -95,17 +95,19 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 			ContainerConfig: s,
 			Type:            BuildContainerType,
 			save:            dw.buildConfig.Build[i].Save,
-			imgCache:        dw.buildConfig.Build[i].ImgCache,
 		}
 		cs.Name = fmt.Sprintf("%s-%d-%d", dw.buildConfig.Name(), i, time.Now().UnixNano())
 		cs.Network = dw.defaultNetConfig()
 
-		if cs.imgCache.IsEnabled() {
+		if dw.buildConfig.Build[i].Cache {
 			hash, err := getBuildHash(cs.ContainerConfig)
 			if err != nil {
 				return err
 			}
-			cs.imgCache.Tag = hash
+			cs.imgCache = &ImgCache{
+				Name: fmt.Sprintf("cache-%s", dw.buildConfig.RepoName),
+				Tag:  hash,
+			}
 		}
 		dw.buildStates[i] = cs
 	}
@@ -356,7 +358,7 @@ func (dw *DockerWorker) Build() error {
 				err = mergeErrors(err, fmt.Errorf("build failed: %s %s", b.Name, b.Container.Image))
 			} else {
 				if e := dw.cacheImage(*b); e != nil {
-					err = mergeErrors(err, fmt.Errorf("build image cache failed: %s %s", b.Name, b.Container.Image))
+					err = mergeErrors(err, fmt.Errorf("cache failed:: %s", e))
 				}
 			}
 		}
@@ -418,14 +420,10 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 	go dw.watchBuild()
 
 	for _, cs := range dw.buildStates {
-		if cs.imgCache.IsEnabled() && cs.imgCache.IsTagSet() {
-			cacheImgName := getCacheImageName(cs.imgCache)
-			auth := dw.getRegistryAuth(cs.imgCache.Registry)
-			err := dw.docker.PullImage(cacheImgName, auth, dw.log, "cache")
-			if err == nil {
-				if dw.docker.ImageAvailableLocally(cacheImgName) {
-					cs.ContainerConfig.Container.Image = cacheImgName
-				}
+		if cs.imgCache.IsSet() {
+			cacheImgName := cs.imgCache.ToString()
+			if dw.docker.ImageAvailableLocally(cacheImgName) {
+				cs.ContainerConfig.Container.Image = cacheImgName
 			}
 		}
 
@@ -450,13 +448,9 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
 // cacheImage pushes the build image a registry
 func (dw *DockerWorker) cacheImage(cs containerState) error {
-	if cs.imgCache.IsEnabled() && cs.imgCache.IsTagSet() {
-		img := getCacheImageName(cs.imgCache)
+	if cs.imgCache.IsSet() {
+		img := cs.imgCache.ToString()
 		if err := dw.docker.BuildImageOfContainer(cs.ID(), img); err != nil {
-			return err
-		}
-		auth := dw.getRegistryAuth(cs.imgCache.Registry)
-		if err := dw.docker.PushImage(img, auth, os.Stdout, fmt.Sprintf("[cache/%s]", img)); err != nil {
 			return err
 		}
 	}

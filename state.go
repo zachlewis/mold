@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 // ContainerType is the type of container.  This is used to govern the containers
 // lifecycle
 type ContainerType byte
@@ -20,6 +22,22 @@ type containerState struct {
 	done     bool          // container execution completed
 	save     bool          // keep the container after run completes
 	imgCache *ImgCache
+}
+
+type ImgCache struct {
+	Name string
+	Tag  string
+}
+
+func (ic *ImgCache) IsSet() bool {
+	return ic != nil && len(ic.Name) > 0 && len(ic.Tag) > 0
+}
+
+func (ic *ImgCache) ToString() string {
+	if ic == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s:%s", ic.Name, ic.Tag)
 }
 
 func (cs *containerState) Status() string {

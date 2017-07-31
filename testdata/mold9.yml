@@ -13,9 +13,7 @@ build:
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
           - uptime
           - printenv | grep -e VERSION -e COMMIT
-      imgcache:
-          registry: myregistry
-          name: mold
+      cache: true
     - image: golang:1.7.3
       workdir: /go/src/github.com/d3sw/mold
       environment:

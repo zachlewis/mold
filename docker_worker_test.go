@@ -23,8 +23,8 @@ func Test_Worker_Configure(t *testing.T) {
 			t.Fatal("name empty for container", s.Container.Image)
 		}
 	}
-
 }
+
 func Test_Worker_Configure_ImgCache(t *testing.T) {
 	testMc, worker, _ := initializeBuild("./testdata/mold9.yml", "")
 	if err := worker.Configure(testMc); err != nil {
@@ -35,6 +35,10 @@ func Test_Worker_Configure_ImgCache(t *testing.T) {
 	}
 	if worker.buildStates[0].imgCache == nil {
 		t.Fatalf("imgCache tag value is not set")
+	}
+
+	if worker.buildStates[0].imgCache.Name != "cache-mold" {
+		t.Fatalf("imgCache name value is not correct: %s", worker.buildStates[0].imgCache.Name)
 	}
 	if len(worker.buildStates[0].imgCache.Tag) != 64 {
 		t.Fatalf("imgCache tag value is not set to the correct format: %s", worker.buildStates[0].imgCache.Tag)
