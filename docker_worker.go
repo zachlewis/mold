@@ -104,7 +104,7 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 			if err != nil {
 				return err
 			}
-			cs.imgCache = &ImgCache{
+			cs.imgCache = &imgCache{
 				Name: fmt.Sprintf("cache-%s", dw.buildConfig.RepoName),
 				Tag:  hash,
 			}

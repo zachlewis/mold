@@ -21,19 +21,19 @@ type containerState struct {
 	status   string        // build status of the container
 	done     bool          // container execution completed
 	save     bool          // keep the container after run completes
-	imgCache *ImgCache
+	imgCache *imgCache
 }
 
-type ImgCache struct {
+type imgCache struct {
 	Name string
 	Tag  string
 }
 
-func (ic *ImgCache) IsSet() bool {
+func (ic *imgCache) IsSet() bool {
 	return ic != nil && len(ic.Name) > 0 && len(ic.Tag) > 0
 }
 
-func (ic *ImgCache) ToString() string {
+func (ic *imgCache) ToString() string {
 	if ic == nil {
 		return ""
 	}
