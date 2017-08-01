@@ -9,7 +9,9 @@ guidelines useful to experienced open source contributors.
 
 ## Reporting security issues
 
-If you find a security issue in mold, please disclose it privately using the email <NEED-SOMETHING-HERE@BYDELUXE.COM>. Please don't find a GitHub issue - we will be sure to thank you for it publicly when the issue is fixed.
+Mold is meant to be run internally on machines and not out on the internet and hence may contain code not deemed to be safe.  
+
+If you do find a security issue in mold, please disclose it privately. Please don't file a GitHub issue - we will be sure to thank you for it publicly when the issue is fixed.
 
 ## Reporting other issues
 
