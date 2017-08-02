@@ -17,23 +17,23 @@ const (
 type containerState struct {
 	*ContainerConfig
 
-	Type     ContainerType // service or build
-	status   string        // build status of the container
-	done     bool          // container execution completed
-	save     bool          // keep the container after run completes
-	imgCache *imgCache
+	Type   ContainerType // service or build
+	status string        // build status of the container
+	done   bool          // container execution completed
+	save   bool          // keep the container after run completes
+	cache  *cache
 }
 
-type imgCache struct {
+type cache struct {
 	Name string
 	Tag  string
 }
 
-func (ic *imgCache) IsSet() bool {
+func (ic *cache) IsSet() bool {
 	return ic != nil && len(ic.Name) > 0 && len(ic.Tag) > 0
 }
 
-func (ic *imgCache) ToString() string {
+func (ic *cache) ToString() string {
 	if ic == nil {
 		return ""
 	}

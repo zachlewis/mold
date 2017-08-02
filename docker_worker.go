@@ -104,7 +104,7 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 			if err != nil {
 				return err
 			}
-			cs.imgCache = &imgCache{
+			cs.cache = &cache{
 				Name: fmt.Sprintf("cache-%s", dw.buildConfig.RepoName),
 				Tag:  hash,
 			}
@@ -420,8 +420,8 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 	go dw.watchBuild()
 
 	for _, cs := range dw.buildStates {
-		if cs.imgCache.IsSet() {
-			cacheImgName := cs.imgCache.ToString()
+		if cs.cache.IsSet() {
+			cacheImgName := cs.cache.ToString()
 			if dw.docker.ImageAvailableLocally(cacheImgName) {
 				cs.ContainerConfig.Container.Image = cacheImgName
 			}
@@ -448,8 +448,8 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
 // cacheImage pushes the build image a registry
 func (dw *DockerWorker) cacheImage(cs containerState) error {
-	if cs.imgCache.IsSet() {
-		img := cs.imgCache.ToString()
+	if cs.cache.IsSet() {
+		img := cs.cache.ToString()
 		if err := dw.docker.BuildImageOfContainer(cs.ID(), img); err != nil {
 			return err
 		}
