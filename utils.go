@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -74,6 +76,22 @@ func getRepoInfo(path string) (name, branchTag, lastCommit string) {
 	}
 
 	return name, branchTag, lastCommit
+}
+
+// getBuildHash gets sha256 hash of a container config
+func getBuildHash(cfg *ContainerConfig) (string, error) {
+	if cfg == nil {
+		return "", fmt.Errorf("Invalid container config -- Empty config")
+	}
+	name := cfg.Name
+	cfg.Name = ""
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return "", fmt.Errorf("The container config cannot be serialized to json: %s", err)
+	}
+	cfg.Name = name
+	h := sha256.Sum256(b)
+	return fmt.Sprintf("%x", h), nil
 }
 
 // returns the name of the image.  it parses out the namespace and tag if provided

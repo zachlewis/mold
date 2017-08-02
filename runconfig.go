@@ -13,6 +13,7 @@ type DockerRunConfig struct {
 	Save        bool     `yaml:",omitempty"` // do not remove container after completion
 	Shell       string   `yaml:",omitempty"`
 	Ports       []string `yaml:",omitempty"` // a quoted list of port mappings
+	Cache       bool     `yaml:",omitempty"`
 }
 
 // BuildCmds returns the command string that is passed in to bash -cex on the

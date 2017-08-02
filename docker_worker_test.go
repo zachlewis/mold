@@ -23,7 +23,30 @@ func Test_Worker_Configure(t *testing.T) {
 			t.Fatal("name empty for container", s.Container.Image)
 		}
 	}
+}
 
+func Test_Worker_Configure_Cache(t *testing.T) {
+	testMc, worker, _ := initializeBuild("./testdata/mold9.yml", "")
+	if err := worker.Configure(testMc); err != nil {
+		t.Fatal(err)
+	}
+	if len(worker.buildStates) != len(testMc.Build) {
+		t.Fatal("service mismatch")
+	}
+	if worker.buildStates[0].cache == nil {
+		t.Fatalf("cache tag value is not set")
+	}
+
+	if worker.buildStates[0].cache.Name != "cache-mold" {
+		t.Fatalf("cache name value is not correct: %s", worker.buildStates[0].cache.Name)
+	}
+	if len(worker.buildStates[0].cache.Tag) != 64 {
+		t.Fatalf("cache tag value is not set to the correct format: %s", worker.buildStates[0].cache.Tag)
+	}
+
+	if worker.buildStates[1].cache != nil {
+		t.Fatalf("cache should be nil when not specified in the mold config")
+	}
 }
 
 func Test_Worker_Build(t *testing.T) {
