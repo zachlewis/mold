@@ -1,13 +1,9 @@
 docker: true
 build:
-    - image: golang:1.7.3
+    - image: golang:1.8.1
       workdir: /go/src/github.com/d3sw/mold
+      cache: true
       commands:
           - make deps
           - make test
-          - make dist
-          - make all
-
-artifacts:
-    images:
-        - name: d3sw/mold
+          - make mold

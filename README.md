@@ -116,7 +116,7 @@ Mold is [released for Linux, Mac, and Windows](https://github.com/d3sw/mold/rele
 You can run mold locally or be incorporate it into your CI pipeline and run on you CI server.
 
 ## Roadmap
-- 0.3.0
+- 0.2.6
     - Build image optimization and caching.
 - 0.2.5
     - First official open-source release.

@@ -15,11 +15,10 @@ clean:
 	go clean -i ./...
 
 test:
-	rm -f coverage.out
-	go test -v -coverprofile=coverage.out ./...
+	go test -cover ./...
 
 deps:
-	go get -d .
+	go get -d ./...
 
 ${NAME}:
 	$(BUILD_CMD) -o $(NAME) .
