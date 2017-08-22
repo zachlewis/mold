@@ -15,10 +15,11 @@ clean:
 	go clean -i ./...
 
 test:
-	go test -cover ./...
+	go test -cover $(go list ./... | grep -v /vendor/)
 
 deps:
-	go get -d ./...
+	go get -u github.com/golang/dep/cmd/dep
+	dep ensure
 
 ${NAME}:
 	$(BUILD_CMD) -o $(NAME) .

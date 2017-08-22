@@ -12,7 +12,7 @@ services:
 # and commands.
 build:
     # Docker image to run commands on
-    - image: golang:1.7.3
+    - image: golang:1.8.1
       # Working directory in the container. This is where your code repo is mounted
       # and persists through out the lifecycle of the build.
       workdir: /go/src/github.com/d3sw/mold
@@ -32,7 +32,7 @@ build:
       ports:
         - "5432:5432"
     # Docker image to run commands on
-    - image: golang:1.2.1
+    - image: golang:1.8.1
       # Working directory in the container
       workdir: /go/src/github.com/d3sw/mold
       # Your customized build commands.
