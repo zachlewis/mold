@@ -1,6 +1,6 @@
 
 build:
-    - image: golang:1.7.3
+    - image: golang:1.8.1
       workdir: /go/src/github.com/d3sw/mold
       environment:
           - TEST_ENV=test_env
@@ -14,7 +14,7 @@ build:
           - uptime
           - printenv | grep -e VERSION -e COMMIT
       cache: true
-    - image: golang:1.7.3
+    - image: golang:1.8.1
       workdir: /go/src/github.com/d3sw/mold
       environment:
           - TEST_ENV=test_env
@@ -27,7 +27,7 @@ build:
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
           - uptime
           - printenv | grep -e VERSION -e COMMIT
-    - image: golang:1.2.1
+    - image: golang:1.8.1
       workdir: /go/src/github.com/d3sw/mold
       commands:
           - hostname
@@ -38,7 +38,7 @@ build:
           - whoami
           - cat /etc/resolv.conf | grep name |  sed -e 's/name//g'
           - printenv | grep -e VERSION -e COMMIT
-    - image: golang:1.2.1
+    - image: golang:1.8.1
       workdir: /go/src/github.com/d3sw/mold
       commands:
           - hostname

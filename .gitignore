@@ -1,4 +1,5 @@
 vendor/
+.glide/
 build/
 mold
 Godeps/Readme
