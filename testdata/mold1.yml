@@ -30,7 +30,7 @@ build:
           - printenv
       # a quoted list of ports ala docker-compose
       ports:
-        - "5432:5432"
+        - "61868:61868"
     # Docker image to run commands on
     - image: golang:1.8.1
       # Working directory in the container

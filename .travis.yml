@@ -1,0 +1,18 @@
+# Enable docker
+sudo: required
+
+language: go
+go:
+ - 1.8.1
+
+install:
+  - make deps
+script:
+ - make test
+ - make dist
+deploy:
+  skip_cleanup: true
+  file_glob: true
+  file: "dist/mold-*"
+  on:
+    tags: true

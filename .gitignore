@@ -1,8 +1,6 @@
 vendor/
-.glide/
-build/
+dist/
 mold
-Godeps/Readme
 
 debug
 .DS_Store

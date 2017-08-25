@@ -1,4 +1,4 @@
-# mold
+# mold [![Build Status](https://travis-ci.org/d3sw/mold.svg?branch=master)](https://travis-ci.org/d3sw/mold)
 Mold is a tool to help test, build, package and publish your application completely within a containerized environment.
 It automates the process from installing dependencies and testing to packaging and publishing your image to a registry.
 

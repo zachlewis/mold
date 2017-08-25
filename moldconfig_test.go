@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	testMoldCfg     = "testdata/mold1.yml"
+	testMoldCfg = "testdata/mold1.yml"
 )
 
 func Test_DefaultMoldConfig(t *testing.T) {
@@ -99,7 +99,7 @@ func TestReadBuildPort(t *testing.T) {
 		t.Errorf("Expected ports: section of %v but didn't find it", buildFile)
 	}
 
-	if testBc.Build[0].Ports[0] != "5432:5432" {
-		t.Errorf("Expected 5432:5432 in ports section of %v but didn't find it", buildFile)
+	if testBc.Build[0].Ports[0] != "61868:61868" {
+		t.Errorf("Expected 61868:61868 in ports section of %v but didn't find it", buildFile)
 	}
 }

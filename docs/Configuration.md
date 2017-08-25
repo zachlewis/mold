@@ -1,7 +1,7 @@
 # Configuration
 By default mold looks for a .mold.yml configuration file at the root of your project.
 This contains all the necessary information to perform your build.  A sample with comments
-can be found in [testdata/mold1.yml](testdata/mold1.yml).
+can be found in [testdata/mold1.yml](../testdata/mold1.yml).
 
 The build configuration is broken up into the following sections:
 
@@ -78,7 +78,8 @@ to run the build.
 #### workdir
 This is **path inside the container** where the project repository will be accessible (mounted).
 It can be an path of your choosing.  In the above example the source repo for mold will
-be available under `/go/src/github.com/d3sw/mold` inside the `golang:1.8.1` container.
+be available under `/go/src/github.com/d3sw/mold` inside the `golang:1.8.1` container.  Any
+data written to this directory is later available in the artifacts stage.
 
 #### image
 This is the docker image name used to build/test code.  These are disposable and not used to generate the final
@@ -88,9 +89,16 @@ package the image as specified in the [artifacts](#Artifacts) configuration.
 #### commands
 These are the commands that will be run in the container to do testing and building.
 
+#### cache
+If set to true it caches the build image to be reused on the next run.  By default it is
+set to false.
+
 ## Artifacts
-Artifacts are docker images to be built using the data available from the build step.  
-Using the specified Dockerfile and name, image are built which may be published to a registry
+Artifacts are docker images to be built **using the data available from the build step**.
+This is accomplished by using the working directory as context to the docker image build
+process.
+
+Using the specified Dockerfile and name, images are built which may be published to a registry
 based on conditional parameters.  This is the final product destined for production.  
 These images would be very trimmed down and as minimalistic as possible specifically tailored
 for the application.  
