@@ -103,3 +103,22 @@ func TestReadBuildPort(t *testing.T) {
 		t.Errorf("Expected 61868:61868 in ports section of %v but didn't find it", buildFile)
 	}
 }
+
+func Test_NewMoldConfig_ImageWithoutName(t *testing.T) {
+	b, err := ioutil.ReadFile("testdata/mold.image.noname.yml")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = NewMoldConfig([]byte(b))
+
+	if err == nil {
+		t.Error("Expected error to be thrown")
+	}
+
+	expected := "image without a name is not allowed"
+	if err.Error() != expected {
+		t.Errorf("Expected '%s' error message, but got '%s'", expected, err)
+	}
+}

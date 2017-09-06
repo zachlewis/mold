@@ -1,0 +1,4 @@
+artifacts:
+  images:
+    - name: Yeee
+    - docker: Dockerfile

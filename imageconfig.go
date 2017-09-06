@@ -25,6 +25,9 @@ type ImageConfig struct {
 
 // Validate the image config.
 func (ic *ImageConfig) Validate() error {
+	if ic.Name == "" {
+		return fmt.Errorf("image without a name is not allowed")
+	}
 
 	if strings.Contains(ic.Name, ":") && len(ic.Tags) > 0 {
 		return fmt.Errorf("cannot specify tags in name and tags")
