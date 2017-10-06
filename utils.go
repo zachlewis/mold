@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 )
 
 const dockerSockFile = "/var/run/docker.sock"
+const dockerIgnoreFile = ".dockerignore"
 
 // initializeMoldConfig is called with the -init flag. It creates a new config at the root
 // of the project if one is not there.
@@ -122,8 +124,23 @@ func readMoldConfig(moldFile string) (*MoldConfig, error) {
 	return nil, err
 }
 
-func tarDirectory(srcPath string) (io.ReadCloser, error) {
+func getExcludes(path string) []string {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer file.Close()
+
 	var excludes []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		excludes = append(excludes, scanner.Text())
+	}
+	return excludes
+}
+
+func tarDirectory(srcPath string) (io.ReadCloser, error) {
+	excludes := getExcludes(filepath.Join(srcPath, dockerIgnoreFile))
 	includes := []string{"."}
 
 	tarOpts := &archive.TarOptions{

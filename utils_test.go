@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
 
 func Test_gitVersion(t *testing.T) {
 	gt, err := newGitVersion(".")
@@ -12,6 +15,27 @@ func Test_gitVersion(t *testing.T) {
 		t.Fatal("should not be 0.0.0")
 	}
 	t.Log(gt.Version())
+}
+
+func equal(a, b []string) bool {
+	if a == nil || b == nil || len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func Test_getExcludes(t *testing.T) {
+	expectedExcludes := []string{"huge_file", "important_dir_with_huge_files/*", "dir_with_huge_files"}
+	excludes := getExcludes(filepath.Join("testdata/", dockerIgnoreFile))
+	if !equal(excludes, expectedExcludes) {
+		t.Fatal("should return ", expectedExcludes, "; got ", excludes)
+	}
 }
 
 func Test_getBuildHash(t *testing.T) {
