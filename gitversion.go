@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/src-d/go-git.v4"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
@@ -17,6 +17,15 @@ type gitVersion struct {
 	tags      map[plumbing.Hash]*plumbing.Reference
 	latestTag *plumbing.Reference
 	distance  int
+}
+
+func (gt *gitVersion) getTag(hash string) string {
+	h := plumbing.NewHash(hash)
+	v, ok := gt.tags[h]
+	if !ok {
+		return ""
+	}
+	return v.Name().Short()
 }
 
 func newGitVersion(path string) (*gitVersion, error) {

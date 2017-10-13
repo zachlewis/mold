@@ -5,10 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-	"path/filepath"
-	"io/ioutil"
 	"bytes"
+	"io/ioutil"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 )
 
 const defaultBuildConfigName = ".mold.yml"
@@ -83,6 +84,7 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 		}
 	}
 	mc.Artifacts.setDefaults()
+	mc.normalizeArtifactsPubs()
 	mc.normalizeArtifactsImageTags()
 
 	if err = mc.Artifacts.ValidateImageConfigs(); err != nil {
@@ -104,8 +106,14 @@ func NewMoldConfig(fileBytes []byte) (*MoldConfig, error) {
 	return &mc, err
 }
 
-// Normalize image tag vars.
+// Normalize publish branch/tag vars.
+func (mc *MoldConfig) normalizeArtifactsPubs() {
+	for i := range mc.Artifacts.Publish {
+		mc.Artifacts.Publish[i] = strings.Replace(mc.Artifacts.Publish[i], "${APP_VERSION}", mc.gitVersion.Version(), -1)
+	}
+}
 
+// Normalize image tag vars.
 func (mc *MoldConfig) normalizeArtifactsImageTags() {
 	for i := range mc.Artifacts.Images {
 		mc.Artifacts.Images[i].ReplaceTagVars("${APP_VERSION}", mc.gitVersion.Version())
@@ -145,7 +153,7 @@ func (mc *MoldConfig) setBuildEnvVars() {
 
 // check and set repo info and naming structure - RE-VISIT
 func (mc *MoldConfig) checkRepoInfo() {
-	name, bt, lc := computeRepoInfo(mc.Context)
+	name, bt, lc := mc.computeRepoInfo(mc.Context)
 	mc.setRepoInfoToComputedValuesIfEmpty(name, bt, lc)
 }
 
@@ -163,7 +171,7 @@ func (mc *MoldConfig) setRepoInfoToComputedValuesIfEmpty(name string, branchTag 
 
 // parse git info from .git/HEAD to get name, branch and commit info.  If not found
 // that item will be an empty string
-func computeRepoInfo(path string) (name, branchTag, lastCommit string) {
+func (mc *MoldConfig) computeRepoInfo(path string) (name, branchTag, lastCommit string) {
 	name = filepath.Base(path)
 
 	b, err := ioutil.ReadFile(filepath.Join(path, ".git/HEAD"))
@@ -186,11 +194,11 @@ func computeRepoInfo(path string) (name, branchTag, lastCommit string) {
 		if len(lp[0]) > 7 {
 			lastCommit = lp[0][:8]
 		}
+		branchTag = mc.gitVersion.getTag(lp[0])
 	}
 
 	return name, branchTag, lastCommit
 }
-
 
 // read env vars and config.  These take precedence over all configs overriding
 // anything prior - RE-VISIT
