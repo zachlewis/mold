@@ -29,7 +29,7 @@ dist:
 	mkdir ./dist
 
 	GOOS=darwin $(BUILD_CMD) -o ./dist/$(NAME) .
-	cd ./dist && tar -czf $(NAME)-linux-$(VERSION).tgz $(NAME); rm -f $(NAME)
+	cd ./dist && tar -czf $(NAME)-darwin-$(VERSION).tgz $(NAME); rm -f $(NAME)
 
 	GOOS=linux $(BUILD_CMD) -o ./dist/$(NAME) .
 	cd ./dist && tar -czf $(NAME)-linux-$(VERSION).tgz $(NAME); rm -f $(NAME)
