@@ -28,8 +28,8 @@ dist:
 	rm -rf ./dist
 	mkdir ./dist
 
-	$(BUILD_CMD) -o ./dist/$(NAME) .
-	cd ./dist && tar -czf $(NAME)-$(GOOS)-$(VERSION).tgz $(NAME); rm -f $(NAME)
+	GOOS=darwin $(BUILD_CMD) -o ./dist/$(NAME) .
+	cd ./dist && tar -czf $(NAME)-linux-$(VERSION).tgz $(NAME); rm -f $(NAME)
 
 	GOOS=linux $(BUILD_CMD) -o ./dist/$(NAME) .
 	cd ./dist && tar -czf $(NAME)-linux-$(VERSION).tgz $(NAME); rm -f $(NAME)
