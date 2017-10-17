@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -78,7 +79,11 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 	for i, s := range sc {
 		// Initialize state
 		cs := &containerState{ContainerConfig: s, Type: ServiceContainerType}
-		cs.Name = nameFromImageName(s.Container.Image) + "." + cfg.RepoName
+		if cs.Name == "" {
+			// applying a counter to the end of service name for running equal services
+			cs.Name = nameFromImageName(s.Container.Image) + "." + cfg.RepoName + "." + strconv.Itoa(i)
+		}
+
 		// Attach network
 		cs.Network = dw.defaultNetConfig()
 		dw.serviceStates[i] = cs
@@ -127,6 +132,7 @@ func assembleServiceContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 		}
 
 		cc.Container.Env = env
+		cc.Name = b.Name
 		bcs[i] = cc
 	}
 	return bcs, nil
@@ -403,8 +409,8 @@ func (dw *DockerWorker) Setup() error {
 	dw.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", dw.buildConfig.Name(), dw.netID)))
 
 	// Start service containers
-	for i, cs := range dw.serviceStates {
-		if err := dw.docker.StartContainer(dw.serviceStates[i].ContainerConfig, dw.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
+	for _, cs := range dw.serviceStates {
+		if err := dw.docker.StartContainer(cs.ContainerConfig, dw.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
 			return err
 		}
 		dw.log.Write([]byte(fmt.Sprintf("[setup/service/%s] Started %s\n", cs.Name, cs.Container.Image)))

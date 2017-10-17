@@ -4,6 +4,7 @@ services:
       commands:
           - -server
           - -bootstrap
+      name: consul.mold
 
 build:
     - image: alpine
