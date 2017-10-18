@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	dockerURI   = flag.String("uri", "unix:///var/run/docker.sock", "Docker URI")
+	dockerURI   = flag.String("uri", "", "Docker URI")
 	buildFile   = flag.String("f", defaultBuildConfigName, "Build config file")
 	buildTarget = flag.String("t", "", "Build target [build|artifacts|publish]")
 

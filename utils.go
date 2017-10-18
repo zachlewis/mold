@@ -17,8 +17,13 @@ import (
 	"github.com/docker/docker/pkg/archive"
 )
 
-const dockerSockFile = "/var/run/docker.sock"
-const dockerIgnoreFile = ".dockerignore"
+var dockerSockFile = "/var/run/docker.sock"
+
+const (
+	dockerIgnoreFile = ".dockerignore"
+	linuxDockerURI   = "unix:///var/run/docker.sock"
+	windowsDockerURI = "tcp://127.0.0.1:2375"
+)
 
 // initializeMoldConfig is called with the -init flag. It creates a new config at the root
 // of the project if one is not there.
