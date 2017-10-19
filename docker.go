@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -60,14 +61,24 @@ type Docker struct {
 // NewDocker returns a new docker client helper using the given uri.  If uri is
 // not provided it uses the default env. client
 func NewDocker(uri string) (*Docker, error) {
-	if len(uri) == 0 {
-		cli, err := client.NewEnvClient()
-		return &Docker{cli: cli}, err
-	}
 	var (
 		hcli    *http.Client
 		version = os.Getenv("DOCKER_API_VERSION")
 	)
+
+	if len(uri) == 0 {
+		if runtime.GOOS == "windows" {
+			uri = windowsDockerURI
+			dockerSockFile = windowsDockerURI
+		} else {
+			uri = linuxDockerURI
+		}
+	}
+
+	if runtime.GOOS == "windows" {
+		os.Setenv("HOME", "C:/Users/"+os.Getenv("USERNAME"))
+	}
+
 	//if version == "" {
 	//      client.
 	//}
