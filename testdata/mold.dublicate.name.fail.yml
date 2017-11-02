@@ -1,0 +1,9 @@
+services:
+    - image: progrium/consul
+      commands:
+          - -server
+          - -bootstrap
+      name: name
+    - image: "golang:1.8.1"
+      workdir: "/go/src/experimental"
+      name: name
