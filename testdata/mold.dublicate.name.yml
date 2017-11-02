@@ -1,0 +1,6 @@
+services:
+    - image: "golang:1.8.1"
+      workdir: "/go/src/experimental"
+    - image: "golang:1.8.1"
+      workdir: "/go/src/experimental"
+      name: golang.mold.auto0

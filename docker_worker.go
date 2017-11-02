@@ -75,10 +75,31 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 	}
 
 	dw.serviceStates = make([]*containerState, len(sc))
+
+	sNames, err := validateUserServiceNames(sc)
+	if err != nil {
+		return err
+	}
+
+	var newName string
+	var counter int
 	for i, s := range sc {
 		// Initialize state
 		cs := &containerState{ContainerConfig: s, Type: ServiceContainerType}
-		cs.Name = nameFromImageName(s.Container.Image) + "." + cfg.RepoName
+		if cs.Name == "" {
+			for {
+				// applying a counter to the end of service name for running equal services
+				newName = fmt.Sprintf("%s.%s.auto%d", nameFromImageName(s.Container.Image), cfg.RepoName, counter)
+				// increment last counter and run check again if such service name already set explicitly
+				counter++
+				if _, ok := sNames[newName]; ok {
+					continue
+				}
+				break
+			}
+			cs.Name = newName
+		}
+
 		// Attach network
 		cs.Network = dw.defaultNetConfig()
 		dw.serviceStates[i] = cs
@@ -115,6 +136,21 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 	return nil
 }
 
+// validation values that the user has set explicitly
+func validateUserServiceNames(sc []*ContainerConfig) (map[string]bool, error) {
+	var serviceNames = make(map[string]bool)
+	for _, s := range sc {
+		if s.Name == "" {
+			continue
+		}
+		if _, ok := serviceNames[s.Name]; ok {
+			return nil, fmt.Errorf("duplicate name [%s]; names  need to be unique", s.Name)
+		}
+		serviceNames[s.Name] = true
+	}
+	return serviceNames, nil
+}
+
 func assembleServiceContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 	bcs := make([]*ContainerConfig, len(mc.Services))
 	for i, b := range mc.Services {
@@ -127,6 +163,7 @@ func assembleServiceContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 		}
 
 		cc.Container.Env = env
+		cc.Name = b.Name
 		bcs[i] = cc
 	}
 	return bcs, nil
@@ -403,8 +440,8 @@ func (dw *DockerWorker) Setup() error {
 	dw.log.Write([]byte(fmt.Sprintf("[configure/network/%s] Created %s\n", dw.buildConfig.Name(), dw.netID)))
 
 	// Start service containers
-	for i, cs := range dw.serviceStates {
-		if err := dw.docker.StartContainer(dw.serviceStates[i].ContainerConfig, dw.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
+	for _, cs := range dw.serviceStates {
+		if err := dw.docker.StartContainer(cs.ContainerConfig, dw.log, fmt.Sprintf("[setup/service/%s]", cs.Name)); err != nil {
 			return err
 		}
 		dw.log.Write([]byte(fmt.Sprintf("[setup/service/%s] Started %s\n", cs.Name, cs.Container.Image)))
