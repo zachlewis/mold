@@ -114,3 +114,23 @@ func Test_LifeCycle_dublicate_name_fail(t *testing.T) {
 		t.Fatal("should fail with error \"dublicate name\"")
 	}
 }
+
+func Test_LifeCycle_CleanUp(t *testing.T) {
+	mc, worker, _ := initializeBuild("./testdata/mold.clean-up.yml", *dockerURI)
+	lc := NewLifeCycle(worker)
+	if err := lc.Run(mc); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := worker.getImageID("golang:1.8.1"); err == nil {
+		t.Fatal("should fail with \"image not found\"")
+	}
+
+	if _, err := worker.getImageID("test-image:0.1.0"); err == nil {
+		t.Fatal("should fail with \"image not found\"")
+	}
+
+	if _, err := worker.getImageID("test-image:0.1.1"); err != nil {
+		t.Fatal("should return image id, returned: ", err.Error())
+	}
+}

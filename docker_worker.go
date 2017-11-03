@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -291,7 +292,7 @@ func (dw *DockerWorker) generateArtifact(ic *ImageConfig) error {
 func (dw *DockerWorker) RemoveArtifacts() error {
 	var err error
 	for _, a := range dw.buildConfig.Artifacts.Images {
-		err = mergeErrors(err, dw.docker.RemoveImage(a.Name, true))
+		err = mergeErrors(err, dw.docker.RemoveImage(a.Name, true, a.CleanUp))
 	}
 	return err
 }
@@ -510,8 +511,53 @@ func (dw *DockerWorker) Teardown() error {
 		}
 	}
 
+	// remove build image if 'cleanup' flag was setted
+	for _, bImage := range dw.buildConfig.Build {
+		if bImage.CleanUp == true {
+			id, err := dw.getImageID(bImage.Image)
+			if err != nil {
+				continue
+			}
+			if err = mergeErrors(err, dw.docker.RemoveImage(id, true, bImage.CleanUp)); err != nil {
+				log.Println("ERR [Teardown] Removing image %s: %s\n", bImage.Image, err.Error())
+			}
+		}
+	}
+
 	err = mergeErrors(err, dw.docker.RemoveNetwork(dw.netID))
+
+	for _, a := range dw.buildConfig.Artifacts.Images {
+		if a.CleanUp {
+			id, err := dw.getImageID(a.Name)
+			if err != nil {
+				continue
+			}
+			if err = mergeErrors(err, dw.docker.RemoveImage(id, true, a.CleanUp)); err != nil {
+				log.Println("ERR [Teardown] Removing images:", err.Error())
+			}
+		}
+	}
 	return err
+}
+
+// getImageID returns image  ID by repository name
+func (dw *DockerWorker) getImageID(repoName string) (string, error) {
+	// adding default tag "latest" if there are no tags
+	if len(strings.Split(repoName, ":")) == 1 {
+		repoName += ":latest"
+	}
+	imagesInfo, err := dw.docker.cli.ImageList(context.Background(), types.ImageListOptions{All: true})
+	if err != nil {
+		return "", err
+	}
+	for _, i := range imagesInfo {
+		for _, repoTag := range i.RepoTags {
+			if repoName == repoTag {
+				return i.ID, nil
+			}
+		}
+	}
+	return "", errors.New("no such image")
 }
 
 // TODO: add locking???

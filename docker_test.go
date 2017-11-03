@@ -28,7 +28,7 @@ func Test_Docker_PullImage(t *testing.T) {
 	if err := d.PullImage("busybox:latest", nil, os.Stdout, ""); err != nil {
 		t.Fatal(err)
 	}
-	d.RemoveImage("busybox:latest", true)
+	d.RemoveImage("busybox:latest", true, false)
 
 	if err := d.PullImage("nosuchrepo:latest", nil, os.Stdout, ""); err == nil {
 		t.Fatal("Error should be reported when failing to pull an image")

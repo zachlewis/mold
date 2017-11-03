@@ -15,6 +15,7 @@ type DockerRunConfig struct {
 	Ports       []string `yaml:",omitempty"` // a quoted list of port mappings
 	Cache       bool     `yaml:",omitempty"`
 	Name        string   `yaml:",omitempty"`
+	CleanUp     bool     `yaml:",omitempty"`
 }
 
 // BuildCmds returns the command string that is passed in to bash -cex on the

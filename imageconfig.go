@@ -15,9 +15,9 @@ type ImageConfig struct {
 	// Additional tags to be applied to the image on top of the default 'latest'
 	Tags []string `yaml:",omitempty"`
 
-	Registry string `yaml:",omitempty"`
-	Context  string `yaml:",omitempty"` // working directory, url etc.
-
+	Registry  string `yaml:",omitempty"`
+	Context   string `yaml:",omitempty"` // working directory, url etc.
+	CleanUp   bool   `yaml:",omitempty"`
 	baseimage string
 
 	id string

@@ -252,8 +252,11 @@ func (dkr *Docker) BuildImageAsync(ic *ImageConfig, logWriter io.Writer, prefix 
 }
 
 // RemoveImage locally from the host
-func (dkr *Docker) RemoveImage(imageID string, force bool) error {
+func (dkr *Docker) RemoveImage(imageID string, force bool, cleanUp bool) error {
 	options := types.ImageRemoveOptions{Force: force}
+	if cleanUp {
+		options.PruneChildren = true
+	}
 	_, err := dkr.cli.ImageRemove(context.Background(), imageID, options)
 	return err
 }

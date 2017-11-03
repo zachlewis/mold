@@ -1,0 +1,11 @@
+build:
+    - image: golang:1.8.1
+      workdir: /go/src/github.com/d3sw/mold
+      cleanup: true
+artifacts:
+    images:
+        - name: "test-image:0.1.0"
+          dockerfile: testdata/Dockerfile.art
+          cleanup: true
+        - name: "test-image:0.1.1"
+          dockerfile: testdata/Dockerfile.art
