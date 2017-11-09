@@ -184,6 +184,14 @@ func toDockerWinPath(p string) string {
 	return p
 }
 
+func shortContainerName(cName string) string {
+	iDigits := strings.LastIndexAny(cName, "-")
+	if iDigits > 0 && len(cName) > iDigits+7 {
+		cName = cName[:iDigits+7]
+	}
+	return cName
+}
+
 func printUsage() {
 	fmt.Printf(`
 mold [ options ]

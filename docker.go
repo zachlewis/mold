@@ -25,6 +25,7 @@ import (
 // ContainerConfig holds all configs needed to run the docker container
 type ContainerConfig struct {
 	Name      string // name of the running container
+	shortName string
 	Container *container.Config
 	Host      *container.HostConfig
 	Network   *network.NetworkingConfig
@@ -105,7 +106,7 @@ func (dkr *Docker) ImageAvailableLocally(imageName string) bool {
 // StartContainer creates and starts a container with the given config updating
 // the state of the ContainerConfig.  It also pulls the base image if not locally
 // available. This is a non-blocking call.
-func (dkr *Docker) StartContainer(cc *ContainerConfig, wr io.Writer, prefix string) error {
+func (dkr *Docker) StartContainer(cc *ContainerConfig, wr *Log, prefix string) error {
 	if !dkr.ImageAvailableLocally(cc.Container.Image) {
 		if err := dkr.PullImage(cc.Container.Image, nil, wr, prefix); err != nil {
 			return err

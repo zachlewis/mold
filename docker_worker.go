@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -40,7 +39,7 @@ type DockerWorker struct {
 	abort   chan bool // cancelled channel
 	aborted bool      // whether the worker has begun shutdown
 
-	log io.Writer
+	log *Log
 	// Auth config for registry operations
 	authCfg *DockerAuthConfig
 }
@@ -48,7 +47,7 @@ type DockerWorker struct {
 // NewDockerWorker instantiates a new worker. If no client is provided and env.
 // based client is used.
 func NewDockerWorker(dcli *Docker) (d *DockerWorker, err error) {
-	d = &DockerWorker{docker: dcli, log: os.Stdout, abort: make(chan bool, 1)}
+	d = &DockerWorker{docker: dcli, log: &Log{Writer: os.Stdout}, abort: make(chan bool, 1)}
 	// set up registry auth. pushes will not happen if failed
 	if d.authCfg, err = readDockerAuthConfig(""); err != nil {
 		log.Println("WRN", err)
@@ -119,6 +118,7 @@ func (dw *DockerWorker) Configure(cfg *MoldConfig) error {
 			save:            dw.buildConfig.Build[i].Save,
 		}
 		cs.Name = fmt.Sprintf("%s-%d-%d", dw.buildConfig.Name(), i, time.Now().UnixNano())
+		cs.shortName = shortContainerName(cs.Name)
 		cs.Network = dw.defaultNetConfig()
 
 		if dw.buildConfig.Build[i].Cache {
@@ -467,7 +467,7 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 
 		err := dw.docker.StartContainer(cs.ContainerConfig, dw.log, "")
 		if err == nil {
-			os.Stdout.Write([]byte(fmt.Sprintf("[build/%s] Started %s\n", cs.Name, cs.Container.Image)))
+			dw.log.WithField("container", cs.Name).Write([]byte(fmt.Sprintf("[build/%s...] Started \n", cs.shortName)))
 			if cs.Type == BuildContainerType && tailLog {
 				go func(csID, prefix string) {
 					// wait otherwise docker may return a 404
@@ -475,7 +475,7 @@ func (dw *DockerWorker) StartBuildAsync(tailLog bool) (chan bool, error) {
 					if e := dw.docker.TailLogs(csID, dw.log, prefix); e != nil {
 						log.Println("ERR Failed to tail log", e)
 					}
-				}(cs.ID(), fmt.Sprintf("[build/%s]", cs.Name))
+				}(cs.ID(), fmt.Sprintf("[build/%s...]", cs.shortName))
 			}
 			continue
 		}
@@ -577,7 +577,7 @@ func (dw *DockerWorker) markContainerDone(id, status string, state *types.Contai
 				dw.buildStates[i].state = &types.ContainerState{Running: false}
 			}
 			dw.mu.Unlock()
-			dw.log.Write([]byte(fmt.Sprintf("[build/%s] DONE\n", v.Name)))
+			dw.log.Write([]byte(fmt.Sprintf("[build/%s...] DONE\n", v.shortName)))
 		}
 	}
 	// check if all builds are done
