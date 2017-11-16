@@ -157,6 +157,7 @@ func assembleServiceContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 	for i, b := range mc.Services {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.Cmd = b.Commands
+		cc.Host.Binds = b.Volumes
 
 		env, err := appendOsEnv(b.Environment)
 		if err != nil {
@@ -196,6 +197,7 @@ func assembleBuildContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 	for i, b := range mc.Build {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.WorkingDir = b.Workdir
+		cc.Host.Binds = b.Volumes
 
 		exposedPorts, portBindings, err := nat.ParsePortSpecs(b.Ports)
 		if err != nil {

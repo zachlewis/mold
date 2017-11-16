@@ -10,6 +10,7 @@ type DockerRunConfig struct {
 	Commands    []string // Commands to run in the container
 	Workdir     string   // Working directory in the container
 	Environment []string
+	Volumes     []string `yaml:"volumes,omitempty"`
 	Save        bool     `yaml:",omitempty"` // do not remove container after completion
 	Shell       string   `yaml:",omitempty"`
 	Ports       []string `yaml:",omitempty"` // a quoted list of port mappings
