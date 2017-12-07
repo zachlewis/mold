@@ -129,6 +129,23 @@ func readMoldConfig(moldFile string) (*MoldConfig, error) {
 	return nil, err
 }
 
+func getEnvVars(envFile string) ([]string, error) {
+	fd, err := os.Open(envFile)
+	if err != nil {
+		return nil, err
+	}
+	defer fd.Close()
+
+	var envs []string
+	scanner := bufio.NewScanner(fd)
+
+	for scanner.Scan() {
+		envPair := scanner.Text()
+		envs = append(envs, envPair)
+	}
+	return envs, nil
+}
+
 func getExcludes(path string) []string {
 	file, err := os.Open(path)
 	if err != nil {

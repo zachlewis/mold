@@ -213,6 +213,13 @@ func assembleBuildContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if b.File != "" {
+			envFromFile, err := getEnvVars(b.File)
+			if err == nil {
+				env = append(env, envFromFile...)
+			}
+		}
 		cc.Container.Env = env
 
 		src := mc.Context

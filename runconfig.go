@@ -9,7 +9,7 @@ type DockerRunConfig struct {
 	Image       string   // Docker image to use for code build
 	Commands    []string // Commands to run in the container
 	Workdir     string   // Working directory in the container
-	Environment []string
+	Environment []string `yaml:",omitempty"`
 	Volumes     []string `yaml:"volumes,omitempty"`
 	Save        bool     `yaml:",omitempty"` // do not remove container after completion
 	Shell       string   `yaml:",omitempty"`
@@ -17,6 +17,7 @@ type DockerRunConfig struct {
 	Cache       bool     `yaml:",omitempty"`
 	Name        string   `yaml:",omitempty"`
 	CleanUp     bool     `yaml:",omitempty"`
+	File        string   `yaml:"file,omitempty"` // a file with environment variables
 }
 
 // BuildCmds returns the command string that is passed in to bash -cex on the
