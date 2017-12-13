@@ -134,10 +134,6 @@ func Test_LifeCycle_CleanUp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := worker.getImageID("golang:1.8.1"); err == nil {
-		t.Fatal("should fail with \"image not found\"")
-	}
-
 	if _, err := worker.getImageID("test-image:0.1.0"); err == nil {
 		t.Fatal("should fail with \"image not found\"")
 	}

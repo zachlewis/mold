@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -52,37 +51,6 @@ func initializeMoldConfig(dirname string) error {
 
 	_, err = fh.Write(b)
 	return err
-}
-
-// parse git info from .git/HEAD to get name, branch and commit info.  If not found
-// that item will be an empty string
-func getRepoInfo(path string) (name, branchTag, lastCommit string) {
-
-	name = filepath.Base(path)
-
-	b, err := ioutil.ReadFile(filepath.Join(path, ".git/HEAD"))
-	if err != nil {
-		return
-	}
-	lp := strings.Split(string(bytes.TrimSuffix(b, []byte("\n"))), " ")
-
-	switch len(lp) {
-	case 2:
-		pp := strings.Split(lp[1], "/")
-		branchTag = pp[len(pp)-1]
-		if cmt, err := ioutil.ReadFile(filepath.Join(path, ".git", lp[1])); err == nil {
-			if len(cmt) > 7 {
-				lastCommit = string(cmt[:8])
-			}
-		}
-
-	case 1:
-		if len(lp[0]) > 7 {
-			lastCommit = lp[0][:8]
-		}
-	}
-
-	return name, branchTag, lastCommit
 }
 
 // getBuildHash gets sha256 hash of a container config

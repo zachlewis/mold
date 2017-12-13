@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/docker/docker/api/types"
 )
 
 func Test_Worker_Configure(t *testing.T) {
@@ -72,7 +75,7 @@ func Test_Worker_Build(t *testing.T) {
 	}
 }
 
-func TestAppendOsEnv_onlyReplacesWhenNoEqualsFound(t *testing.T) {
+func Test_AppendOsEnv_onlyReplacesWhenNoEqualsFound(t *testing.T) {
 	drc := DockerRunConfig{
 		Environment: []string{"DONT_REPLACE=same", "REPLACE"},
 	}
@@ -93,7 +96,7 @@ func TestAppendOsEnv_onlyReplacesWhenNoEqualsFound(t *testing.T) {
 	}
 }
 
-func TestAppendOsEnv_allowsEmptyEnvVar(t *testing.T) {
+func Test_AppendOsEnv_allowsEmptyEnvVar(t *testing.T) {
 	input := []string{"VAL="}
 	if err := os.Setenv("VAL", "shoudntReplaceThis"); err != nil {
 		t.Fatalf("Failed to set up test with: %v", err)
@@ -106,7 +109,7 @@ func TestAppendOsEnv_allowsEmptyEnvVar(t *testing.T) {
 	}
 }
 
-func TestAppendOsEnv_wantedButNotProvidedError(t *testing.T) {
+func Test_AppendOsEnv_wantedButNotProvidedError(t *testing.T) {
 	drc := DockerRunConfig{
 		Environment: []string{"WANTED_BUT_NOT_PROVIDED"},
 	}
@@ -174,7 +177,7 @@ func Test_Worker_Publish_fail2(t *testing.T) {
 	}
 }
 
-func TestBuildListenOnPort(t *testing.T) {
+func Test_BuildListenOnPort(t *testing.T) {
 	testMc, worker, _ := initializeBuild("./testdata/mold8.yml", "")
 	if err := worker.Configure(testMc); err != nil {
 		t.Fatal(err)
@@ -183,4 +186,55 @@ func TestBuildListenOnPort(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func Test_getRegistryAuth(t *testing.T) {
+	d := DockerWorker{}
+	authCfg := d.getRegistryAuth("")
+	if authCfg != nil {
+		t.Fatal("registry auth config should be nil")
+	}
+	d.authCfg = &DockerAuthConfig{
+		Auths: make(map[string]types.AuthConfig),
+	}
+	authCfg = d.getRegistryAuth("")
+	if authCfg != nil {
+		t.Fatal("registry auth config should be nil")
+	}
+
+	d.authCfg.Auths["docker"] = types.AuthConfig{Username: "UnknownEmpty"}
+	authCfg = d.getRegistryAuth("test")
+	if authCfg != nil {
+		t.Fatal("registry auth config should be nil")
+	}
+}
+
+func Test_Publish(t *testing.T) {
+	d := DockerWorker{
+		buildConfig: &MoldConfig{},
+		authCfg: &DockerAuthConfig{
+			Auths: make(map[string]types.AuthConfig, 0),
+		},
+	}
+
+	d.authCfg = &DockerAuthConfig{
+		Auths: make(map[string]types.AuthConfig, 0),
+	}
+
+	err := d.Publish("")
+	if err.Error() != "registry auth not specified" {
+		t.Fatal("should be error \"registry auth not specified\"")
+	}
+
+	err = d.Publish("uno,dos,tres")
+	if err.Error() != "registry auth not specified" {
+		t.Fatal("should be error \"registry auth not specified\"")
+	}
+
+	images := "раз,два,три"
+	d.authCfg.Auths["docker"] = types.AuthConfig{Username: "UnknownEmpty"}
+	err = d.Publish(images)
+	if err.Error() != fmt.Sprintf("no such artifact: %s", images) {
+		t.Fatal(err.Error())
+	}
 }

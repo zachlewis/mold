@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -30,6 +31,21 @@ func Test_NewMoldConfig(t *testing.T) {
 		t.Fatalf("%s", err)
 	}
 
+	if _, ok := os.LookupEnv("GIT_URL"); !ok {
+		os.Setenv("GIT_URL", "https://github.com/dummy/dummy.git")
+		defer os.Unsetenv("GIT_URL")
+	}
+
+	if _, ok := os.LookupEnv("GIT_BRANCH"); !ok {
+		os.Setenv("GIT_BRANCH", "origin/master")
+		defer os.Unsetenv("GIT_BRANCH")
+	}
+
+	if _, ok := os.LookupEnv("GIT_COMMIT"); !ok {
+		os.Setenv("GIT_COMMIT", "1234567890123456")
+		defer os.Unsetenv("GIT_COMMIT")
+	}
+
 	testMc, err := NewMoldConfig(b)
 	if err != nil {
 		t.Fatal(err)
@@ -37,6 +53,11 @@ func Test_NewMoldConfig(t *testing.T) {
 
 	if len(testMc.LastCommit) == 0 {
 		t.Log("last commit should be set")
+		t.Fail()
+	}
+
+	if len(testMc.Name()) == 0 {
+		t.Log("name should be set")
 		t.Fail()
 	}
 

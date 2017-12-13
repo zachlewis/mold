@@ -405,6 +405,9 @@ type DockerAuthConfig struct {
 
 // DockerHubAuth returns the authconfig for docker hub
 func (dac *DockerAuthConfig) DockerHubAuth() *types.AuthConfig {
+	if dac.Auths == nil {
+		return nil
+	}
 	for k, v := range dac.Auths {
 		pp := strings.Split(k, ".")
 		// make sure the fqdn has atleast 3 parts for docker hub registry

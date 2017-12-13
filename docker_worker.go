@@ -309,16 +309,18 @@ func (dw *DockerWorker) RemoveArtifacts() error {
 func (dw *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 	var auth *types.AuthConfig
 
-	if registry == "" {
-		auth = dw.authCfg.DockerHubAuth()
-	} else {
-		for rh, av := range dw.authCfg.Auths {
-			if strings.HasSuffix(rh, registry) {
-				auth = &av
-				if auth.ServerAddress == "" {
-					auth.ServerAddress = rh
+	if dw.authCfg != nil {
+		if registry == "" {
+			auth = dw.authCfg.DockerHubAuth()
+		} else {
+			for rh, av := range dw.authCfg.Auths {
+				if strings.HasSuffix(rh, registry) {
+					auth = &av
+					if auth.ServerAddress == "" {
+						auth.ServerAddress = rh
+					}
+					break
 				}
-				break
 			}
 		}
 	}
@@ -338,7 +340,7 @@ func (dw *DockerWorker) getRegistryAuth(registry string) *types.AuthConfig {
 
 // Publish the artifact/s based on the config
 func (dw *DockerWorker) Publish(names ...string) error {
-	if dw.authCfg == nil || len(dw.authCfg.Auths) == 0 {
+	if dw.authCfg == nil || len(dw.authCfg.Auths) == 0 || dw.buildConfig == nil {
 		//dw.log.Write([]byte("[publish] Not publishing.  registry auth not specified\n"))
 		return fmt.Errorf("registry auth not specified")
 	}
@@ -364,12 +366,10 @@ func (dw *DockerWorker) Publish(names ...string) error {
 			if dw.aborted {
 				return errAborted
 			}
-
 			a := dw.buildConfig.Artifacts.GetImage(name)
 			if a == nil {
 				return fmt.Errorf("no such artifact: %s", name)
 			}
-
 			auth := dw.getRegistryAuth(a.Registry)
 
 			regPaths := a.RegistryPaths()
@@ -378,7 +378,6 @@ func (dw *DockerWorker) Publish(names ...string) error {
 				if err := dw.docker.PushImage(rp, auth, os.Stdout, fmt.Sprintf("[publish/%s]", rp)); err != nil {
 					return err
 				}
-
 			}
 		}
 	}

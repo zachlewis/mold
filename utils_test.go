@@ -5,18 +5,6 @@ import (
 	"testing"
 )
 
-func Test_gitVersion(t *testing.T) {
-	gt, err := newGitVersion(".")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if gt.TagVersion() == "0.0.0" {
-		t.Fatal("should not be 0.0.0")
-	}
-	t.Log(gt.Version())
-}
-
 func equal(a, b []string) bool {
 	if a == nil || b == nil || len(a) != len(b) {
 		return false
@@ -64,5 +52,13 @@ func Test_getBuildHash(t *testing.T) {
 	}
 	if hs[2] == hs[3] {
 		t.Fatalf("Different hash should be generated for different config")
+	}
+}
+
+func Test_toDockerWinPath(t *testing.T) {
+	unixDockerPath := "test_pr/test_path"
+	expectedPath := "//test_pr/test_path"
+	if s := toDockerWinPath(unixDockerPath); s != expectedPath {
+		t.Fatalf("expected %s, got %s\n", expectedPath, s)
 	}
 }

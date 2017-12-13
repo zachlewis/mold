@@ -35,3 +35,13 @@ func Test_ImageConfig(t *testing.T) {
 	}
 	t.Log(out)
 }
+
+func Test_RegistryPaths(t *testing.T) {
+	i := ImageConfig{}
+	if paths := i.RegistryPaths(); paths == nil {
+		t.Fatalf("should be default registry path")
+	}
+	if paths := i.RegistryPaths(); paths == nil {
+		t.Fatalf("should be custom registry path")
+	}
+}
