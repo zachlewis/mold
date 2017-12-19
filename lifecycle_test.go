@@ -116,14 +116,19 @@ func Test_LifeCycle_dublicate_name_fail(t *testing.T) {
 }
 
 func Test_LifeCycle_moldenv(t *testing.T) {
-	envVals := []string{0: "NONAME_ENV=noname", 1: "SECRET_ENV=secret"}
-
-	vals, err := getEnvVars("testdata/mold.env")
+	testMc, _, err := initializeBuild("./testdata/mold.env.yml", "")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	if len(vals) != 2 || vals[0] != envVals[0] || vals[1] != envVals[1] {
-		t.Fatalf("environment values: [%+v], want [%+v]\n", vals, envVals)
+	b := testMc.Build[0]
+
+	envVals, err := b.GetEnvStrings()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(envVals) != 8 {
+		t.Fatalf("environment values: want 8; have %d\n", len(envVals))
 	}
 }
 

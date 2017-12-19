@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -72,52 +71,6 @@ func Test_Worker_Build(t *testing.T) {
 
 	for _, v := range worker.buildStates {
 		t.Log(v.Name, v.Status())
-	}
-}
-
-func Test_AppendOsEnv_onlyReplacesWhenNoEqualsFound(t *testing.T) {
-	drc := DockerRunConfig{
-		Environment: []string{"DONT_REPLACE=same", "REPLACE"},
-	}
-	if err := os.Setenv("DONT_REPLACE", "different"); err != nil {
-		t.Fatalf("Failed to set up test with: %v", err)
-	}
-	if err := os.Setenv("REPLACE", "different"); err != nil {
-		t.Fatalf("Failed to set up test with: %v", err)
-	}
-
-	resultEnv, _ := appendOsEnv(drc.Environment)
-
-	if resultEnv[0] != "DONT_REPLACE=same" {
-		t.Errorf("Should not have replaced environment with '=' but did. Got %v", resultEnv[0])
-	}
-	if resultEnv[1] != "REPLACE=different" {
-		t.Errorf("Did not append environment value. Got %v ", resultEnv[1])
-	}
-}
-
-func Test_AppendOsEnv_allowsEmptyEnvVar(t *testing.T) {
-	input := []string{"VAL="}
-	if err := os.Setenv("VAL", "shoudntReplaceThis"); err != nil {
-		t.Fatalf("Failed to set up test with: %v", err)
-	}
-
-	resultEnv, _ := appendOsEnv(input)
-
-	if resultEnv[0] != "VAL=" {
-		t.Errorf("Should allow empty var declarations")
-	}
-}
-
-func Test_AppendOsEnv_wantedButNotProvidedError(t *testing.T) {
-	drc := DockerRunConfig{
-		Environment: []string{"WANTED_BUT_NOT_PROVIDED"},
-	}
-
-	_, err := appendOsEnv(drc.Environment)
-
-	if err == nil {
-		t.Error("Expected an error for a value specified but not provided")
 	}
 }
 

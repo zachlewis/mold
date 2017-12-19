@@ -158,37 +158,15 @@ func assembleServiceContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 		cc := DefaultContainerConfig(b.Image)
 		cc.Container.Cmd = b.Commands
 		cc.Host.Binds = b.Volumes
-
-		env, err := appendOsEnv(b.Environment)
+		env, err := b.GetEnvStrings()
 		if err != nil {
 			return nil, err
 		}
-
 		cc.Container.Env = env
 		cc.Name = b.Name
 		bcs[i] = cc
 	}
 	return bcs, nil
-}
-
-func appendOsEnv(inputEnvironment []string) ([]string, error) {
-	output := make([]string, len(inputEnvironment))
-
-	for i, env := range inputEnvironment {
-		if !strings.Contains(env, "=") && strings.TrimSpace(env) != "" {
-			envValue := os.Getenv(env)
-			if strings.TrimSpace(envValue) == "" {
-				return nil, fmt.Errorf("Wanted environment value %v but not found", env)
-			}
-
-			newEnv := fmt.Sprintf("%v=%v", env, envValue)
-			output[i] = newEnv
-		} else {
-			output[i] = env
-		}
-	}
-
-	return output, nil
 }
 
 // assembleBuildContainers assembles container configs from user provided build config
@@ -209,16 +187,9 @@ func assembleBuildContainers(mc *MoldConfig) ([]*ContainerConfig, error) {
 		cc.Container.Volumes = map[string]struct{}{b.Workdir: struct{}{}}
 		cc.Container.Cmd = []string{b.Shell, "-cex", b.BuildCmds()}
 
-		env, err := appendOsEnv(b.Environment)
+		env, err := b.GetEnvStrings()
 		if err != nil {
 			return nil, err
-		}
-
-		if b.File != "" {
-			envFromFile, err := getEnvVars(b.File)
-			if err == nil {
-				env = append(env, envFromFile...)
-			}
 		}
 		cc.Container.Env = env
 
@@ -527,7 +498,7 @@ func (dw *DockerWorker) Teardown() error {
 				continue
 			}
 			if err = mergeErrors(err, dw.docker.RemoveImage(id, true, bImage.CleanUp)); err != nil {
-				log.Println("ERR [Teardown] Removing image %s: %s\n", bImage.Image, err.Error())
+				log.Printf("ERR [Teardown] Removing image %s: %s\n", bImage.Image, err.Error())
 			}
 		}
 	}
