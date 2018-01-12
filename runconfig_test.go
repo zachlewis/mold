@@ -20,6 +20,6 @@ func Test_parseEnvFile(t *testing.T) {
 	b.Environment = append(b.Environment, "BAD_VAL")
 	_, err = b.GetEnvStrings()
 	if err == nil {
-		t.Fatalf("should fail with error  \"wrong environment value\"")
+		t.Fatalf("should fail with error \"wrong environment value\"")
 	}
 }
