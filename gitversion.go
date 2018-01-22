@@ -7,6 +7,7 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type gitVersion struct {
@@ -67,14 +68,15 @@ func (gt *gitVersion) initVersion() {
 	if gt.head, err = gt.r.Head(); err != nil {
 		return
 	}
-	if gt.head.IsTag() {
-		gt.latestTag = gt.head
+
+	gt.getTags()
+
+	err = gt.getLatestTag()
+	if err != nil {
 		return
 	}
 
-	gt.getTags()
 	gt.visited = map[plumbing.Hash]struct{}{}
-	gt.recurse(gt.head.Hash())
 }
 
 func (gt *gitVersion) getTags() error {
@@ -104,38 +106,65 @@ func (gt *gitVersion) getTags() error {
 	return nil
 }
 
-func (gt *gitVersion) recurse(h plumbing.Hash) error {
-	gt.visited[h] = struct{}{}
-
-	obj, err := gt.r.Object(plumbing.AnyObject, h)
+func (gt *gitVersion) getLatestTag() error {
+	if gt.head.IsTag() {
+		gt.latestTag = gt.head
+		gt.distance = 0
+		return nil
+	}
+	hhash := gt.head.Hash()
+	var thash plumbing.Hash
+	cIter, err := gt.r.Log(&git.LogOptions{From: hhash})
+	if err != nil {
+		return err
+	}
+	err = cIter.ForEach(func(c *object.Commit) error {
+		if tag, ok := gt.tags[c.Hash]; ok {
+			gt.latestTag = tag
+			thash = c.Hash
+			return storer.ErrStop
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	if obj.Type() != plumbing.CommitObject {
-		return nil
+	d, err := gt.diffCommits(hhash, thash)
+	if err != nil {
+		return err
 	}
-	cmt := obj.(*object.Commit)
+	gt.distance = d
+	return nil
+}
 
-	if tag, ok := gt.tags[cmt.Hash]; ok {
-		//fmt.Println("FOUND", tag)
-		gt.latestTag = tag
-		return nil
+func (gt *gitVersion) countCommits(h plumbing.Hash) (int, error) {
+	if h.IsZero() {
+		return 0, nil
 	}
-
-	gt.distance++
-
-	iter := cmt.Parents()
-	iter.ForEach(func(pc *object.Commit) error {
-
-		if _, ok := gt.visited[pc.Hash]; !ok {
-			gt.recurse(pc.Hash)
-		}
+	cIter, err := gt.r.Log(&git.LogOptions{From: h})
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	err = cIter.ForEach(func(c *object.Commit) error {
+		n++
 		return nil
 	})
-	if tree, err := cmt.Tree(); err == nil {
-		gt.recurse(tree.Hash)
-	}
+	return n, err
+}
 
-	return nil
+func (gt *gitVersion) diffCommits(from, to plumbing.Hash) (int, error) {
+	if from == to {
+		return 0, nil
+	}
+	n1, err := gt.countCommits(from)
+	if err != nil {
+		return 0, err
+	}
+	n2, err := gt.countCommits(to)
+	if err != nil {
+		return 0, err
+	}
+	return n1 - n2, nil
 }
