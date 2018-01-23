@@ -66,6 +66,11 @@ using the host `consul.foo` in your build container.
 The image name of the service to start.  A vast list of public images can be found on
 [Docker Hub](https://hub.docker.com).  Private images can also be specified.
 
+#### name
+The hostname of the service that other containers (in the same network) can reference to.
+The name defaults to `{image}.{repo-name}.auto{id}` when not set. For example, two services using elasticsearch
+image in repo mytest would be called elasticsearch.mytest.auto0 and elasticsearch.mytest.auto1.
+
 #### commands
 These are a list of commands passed as arguments to the service container.
 
