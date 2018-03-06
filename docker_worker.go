@@ -242,7 +242,10 @@ func (dw *DockerWorker) GenerateArtifacts(names ...string) error {
 			return errAborted
 		}
 		dw.log.Write([]byte(fmt.Sprintf("[artifacts/%s] Building\n", ic.Name)))
-		err = mergeErrors(err, dw.generateArtifact(&ic))
+		if err = dw.generateArtifact(&ic); err != nil {
+			// stop the process without creating other artifacts
+			break
+		}
 		dw.log.Write([]byte(fmt.Sprintf("[artifacts/%s] DONE\n", ic.Name)))
 	}
 	return err
@@ -260,6 +263,9 @@ func (dw *DockerWorker) generateArtifact(ic *ImageConfig) error {
 			dw.log.Write([]byte("[artifacts] Completing...\n"))
 		} else {
 			dw.log.Write([]byte("[artifacts] Completing with error(s)...\n"))
+			if err == nil {
+				err = fmt.Errorf("[artifacts] Failed to create image %s", ic.Name)
+			}
 		}
 	case <-dw.abort:
 		dw.RemoveArtifacts()
