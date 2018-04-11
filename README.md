@@ -21,13 +21,31 @@ mold --help
 ```
 
 ## Windows Usage
-On windows, the following needs to be performed in order for mold to function properly
+On Windows 10, the following needs to be performed in order for mold to function properly
 
 1. Must specify `-uri tcp://127.0.0.1:2375` options.
 2. Set the home environment variable to `HOME=C:/Users/{username}`
 3. Make sure `$HOME/.docker/config.json` exists.  You can run `docker login` to create one or simply create any empty file.
 4. Make sure C: is shared: Docker settings > Shared Drives > Select the local drives you want to be available to your containers
 5. Configure Docker by checking `Expose daemon on tcp://localhost:2375`
+
+It is NOT recommended to run mold on Windows 7 since Docker Engine cannot run natively on it. Just when there is no other options, Docker toolbox could be installed and Docker Engine so as mold can run inside a Linux VM hosted on the Windows 7 system.mold could work in Linux VM on Windows 7. 
+
+(Ref: https://docs.docker.com/toolbox/toolbox_install_windows/)
+
+1. Check the OS version - "Run a tool like the Microsoft® Hardware-Assisted Virtualization Detection Tool or Speccy, and follow the on-screen instructions."
+2. Install Remote Server Administration Tools (RSAT) (of Windows)
+3. Install Hyper-V tools (of Windows)
+4. Install Docker toolbox
+5. Disable TLS in Docker profile
+  a. Start "Docker Quickstart Terminal
+  b. Start ssh: docker-machine ssh
+  c. Edit /var/lib/boot2docker/profile so DOCKER_HOST='-H tcp://{ip}:2375'and DOCKER_TLS=no
+  d. Exit ssh: exit
+  e. Restart Docker machine: docker-machine restart
+6. Mount mold realeased for Linux to the VM
+7. Mount project files to the VM
+8. Start `docker-machine ssh` and run mold and Docker in it
 
 ## Configuration
 The mold process is controlled by a single configuration file which by default is `.mold.yml`.  For detailed
