@@ -29,7 +29,7 @@ On Windows 10, the following needs to be performed in order for mold to function
 4. Make sure C: is shared: Docker settings > Shared Drives > Select the local drives you want to be available to your containers
 5. Configure Docker by checking `Expose daemon on tcp://localhost:2375`
 
-It is NOT recommended to run mold on Windows 7 since Docker Engine cannot run natively on it. Just when there is no other options, Docker toolbox could be installed and Docker Engine so as mold can run inside a Linux VM hosted on the Windows 7 system.mold could work in Linux VM on Windows 7. 
+It is NOT recommended to run mold on Windows 7 since Docker Engine cannot run natively on it. Just when there is no other options, Docker toolbox could be installed and Docker Engine so as mold can run inside a Linux VM hosted on the Windows 7 system.
 
 (Ref: https://docs.docker.com/toolbox/toolbox_install_windows/)
 
